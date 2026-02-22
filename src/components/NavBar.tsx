@@ -1,44 +1,78 @@
-import React from "react";
+import React from 'react';
 import {
   Collapse,
   Container,
   Nav,
   Navbar,
+  NavbarBrand,
   NavbarToggler,
   NavItem,
-} from "reactstrap";
-import {NavLink} from "react-router-dom";
-import Profile from "./Profile";
-import ThemeToggle from "./ThemeToggle";
+  Button,
+} from 'reactstrap';
+import { NavLink, useNavigate } from 'react-router-dom';
+import ThemeToggle from './ThemeToggle';
+import { useAuth } from '../context/AuthContext';
 
 const NavBar: React.FunctionComponent = () => {
   const [isOpen, setIsOpen] = React.useState<boolean>(false);
+  const { isAuthenticated, user, logout } = useAuth();
+  const navigate = useNavigate();
 
-  const toggle = () => {
-    setIsOpen(!isOpen);
+  const toggle = () => setIsOpen(!isOpen);
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
   };
 
   return (
     <div>
       <Navbar color="primary" dark expand="lg">
         <Container>
-          <NavLink to="/" className={"navbar-brand"}>
-            CSH React Boilerplate
-          </NavLink>
+          <NavbarBrand href="/">
+            Garnish
+          </NavbarBrand>
           <NavbarToggler onClick={toggle} />
           <Collapse isOpen={isOpen} navbar>
             <Nav navbar>
               <NavItem>
-                <NavLink to="/" className="nav-link">
-                  Home
-                </NavLink>
+                <NavLink to="/" className="nav-link">Feed</NavLink>
               </NavItem>
-              {
-                // to add stuff to the navbar, add a NavItem tag with a NavLink to the route
-              }
+              {isAuthenticated && (
+                <>
+                  <NavItem>
+                    <NavLink to="/recipes/create" className="nav-link">Create</NavLink>
+                  </NavItem>
+                  <NavItem>
+                    <NavLink to="/family" className="nav-link">Family</NavLink>
+                  </NavItem>
+                </>
+              )}
             </Nav>
-            <Nav navbar className="ml-auto">
-              <Profile />
+            <Nav navbar className="ms-auto">
+              {isAuthenticated ? (
+                <>
+                  <NavItem>
+                    <NavLink to="/profile" className="nav-link">
+                      {user?.username}
+                    </NavLink>
+                  </NavItem>
+                  <NavItem>
+                    <Button color="link" className="nav-link text-white" onClick={handleLogout}>
+                      Logout
+                    </Button>
+                  </NavItem>
+                </>
+              ) : (
+                <>
+                  <NavItem>
+                    <NavLink to="/login" className="nav-link">Login</NavLink>
+                  </NavItem>
+                  <NavItem>
+                    <NavLink to="/register" className="nav-link">Register</NavLink>
+                  </NavItem>
+                </>
+              )}
               <NavItem className="nav-link">
                 <ThemeToggle />
               </NavItem>
