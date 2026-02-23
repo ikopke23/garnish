@@ -28,11 +28,11 @@ export async function createFamily(token: string, name: string): Promise<Family>
   return res.json();
 }
 
-export async function addMember(token: string, fid: string, uid: string): Promise<void> {
+export async function addMember(token: string, fid: string, username: string): Promise<void> {
   const res = await fetch(`${apiPrefix}/families/${fid}/members`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...authHeader(token) },
-    body: JSON.stringify({ uid }),
+    body: JSON.stringify({ username }),
   });
   if (!res.ok) throw new Error('Failed to add member');
 }

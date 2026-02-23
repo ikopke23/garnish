@@ -10,7 +10,7 @@ export default function FamilyManager() {
   const [families, setFamilies] = useState<Family[]>([]);
   const [loading, setLoading] = useState(true);
   const [newFamilyName, setNewFamilyName] = useState('');
-  const [newMemberUID, setNewMemberUID] = useState<Record<string, string>>({});
+  const [newMemberUsername, setNewMemberUsername] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -34,10 +34,10 @@ export default function FamilyManager() {
   };
 
   const handleAddMember = async (fid: string) => {
-    if (!token || !newMemberUID[fid]?.trim()) return;
+    if (!token || !newMemberUsername[fid]?.trim()) return;
     try {
-      await addMember(token, fid, newMemberUID[fid].trim());
-      setNewMemberUID({ ...newMemberUID, [fid]: '' });
+      await addMember(token, fid, newMemberUsername[fid].trim());
+      setNewMemberUsername({ ...newMemberUsername, [fid]: '' });
     } catch {
       setError('Failed to add member');
     }
@@ -77,9 +77,9 @@ export default function FamilyManager() {
               <Row className="mt-2 g-2 align-items-center">
                 <Col>
                   <Input
-                    placeholder="Member UID to add"
-                    value={newMemberUID[family.fid] || ''}
-                    onChange={e => setNewMemberUID({ ...newMemberUID, [family.fid]: e.target.value })}
+                    placeholder="Member username to add"
+                    value={newMemberUsername[family.fid] || ''}
+                    onChange={e => setNewMemberUsername({ ...newMemberUsername, [family.fid]: e.target.value })}
                   />
                 </Col>
                 <Col xs="auto">

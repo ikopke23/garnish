@@ -23,7 +23,7 @@ export default function RecipeFeed() {
     }
   };
 
-  useEffect(() => { fetchRecipes(); }, []);
+  useEffect(() => { fetchRecipes(); });
 
   return (
     <Container className="py-4">
@@ -33,6 +33,7 @@ export default function RecipeFeed() {
         <Col md={5}>
           <InputGroup>
             <Input
+              style={{ padding: '0.5rem 0.75rem' }} 
               placeholder="Search by name..."
               value={nameFilter}
               onChange={e => setNameFilter(e.target.value)}
@@ -43,6 +44,7 @@ export default function RecipeFeed() {
         <Col md={5}>
           <InputGroup>
             <Input
+              style={{ padding: '0.5rem 0.75rem' }} 
               placeholder="Filter by ingredient..."
               value={ingredientFilter}
               onChange={e => setIngredientFilter(e.target.value)}
@@ -69,9 +71,9 @@ export default function RecipeFeed() {
                   </Link>
                 </CardTitle>
                 <CardText className="text-muted small mb-2">
-                  {recipe.prep_time > 0 && `Prep: ${recipe.prep_time}min`}
+                  {recipe.prep_time > 0 && `Prep: ${recipe.prep_time} Minutes`}
                   {recipe.prep_time > 0 && recipe.cook_time > 0 && ' · '}
-                  {recipe.cook_time > 0 && `Cook: ${recipe.cook_time}min`}
+                  {recipe.cook_time > 0 && `Cook: ${recipe.cook_time} Minutes`}
                   {recipe.servings > 0 && ` · ${recipe.servings} servings`}
                 </CardText>
                 <div>

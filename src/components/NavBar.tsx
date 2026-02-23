@@ -4,7 +4,6 @@ import {
   Container,
   Nav,
   Navbar,
-  NavbarBrand,
   NavbarToggler,
   NavItem,
   Button,
@@ -29,9 +28,9 @@ const NavBar: React.FunctionComponent = () => {
     <div>
       <Navbar color="primary" dark expand="lg">
         <Container>
-          <NavbarBrand href="/">
-            Garnish
-          </NavbarBrand>
+          <NavItem href="/">
+            <img src="/icons8-garnish-lineal-32.png" alt="Garnish" height="32" />
+          </NavItem>
           <NavbarToggler onClick={toggle} />
           <Collapse isOpen={isOpen} navbar>
             <Nav navbar>
@@ -48,8 +47,6 @@ const NavBar: React.FunctionComponent = () => {
                   </NavItem>
                 </>
               )}
-            </Nav>
-            <Nav navbar className="ms-auto">
               {isAuthenticated ? (
                 <>
                   <NavItem>
@@ -73,6 +70,8 @@ const NavBar: React.FunctionComponent = () => {
                   </NavItem>
                 </>
               )}
+            </Nav>
+            <Nav navbar className="ms-auto">
               <NavItem className="nav-link">
                 <ThemeToggle />
               </NavItem>

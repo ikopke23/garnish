@@ -4,6 +4,7 @@ import {
   Container, Form, FormGroup, Label, Input, Button, Row, Col, Alert
 } from 'reactstrap';
 import { createRecipe, updateRecipe, getRecipe, RecipeIngredient, RecipeEquipment } from '../api/recipes';
+import { listFamilies, Family } from '../api/families';
 import { useAuth } from '../context/AuthContext';
 
 interface Props {
@@ -22,6 +23,8 @@ export default function RecipeForm({ editMode = false }: Props) {
   const [servings, setServings] = useState(1);
   const [ingredients, setIngredients] = useState<RecipeIngredient[]>([{ name: '', quantity: 0, unit: '' }]);
   const [equipmentList, setEquipmentList] = useState<RecipeEquipment[]>([{ name: '' }]);
+  const [families, setFamilies] = useState<Family[]>([]);
+  const [selectedFamilyIDs, setSelectedFamilyIDs] = useState<Set<string>>(new Set());
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -39,6 +42,13 @@ export default function RecipeForm({ editMode = false }: Props) {
     }
   }, [editMode, rid]);
 
+  useEffect(() => {
+    if (!token) return;
+    listFamilies(token)
+      .then(fs => setFamilies(fs.filter(f => f.name !== 'Public')))
+      .catch(() => {});
+  }, [token]);
+
   const addStep = () => setSteps([...steps, '']);
   const removeStep = (i: number) => setSteps(steps.filter((_, idx) => idx !== i));
   const updateStep = (i: number, v: string) => setSteps(steps.map((s, idx) => idx === i ? v : s));
@@ -52,6 +62,13 @@ export default function RecipeForm({ editMode = false }: Props) {
   const removeEquipment = (i: number) => setEquipmentList(equipmentList.filter((_, idx) => idx !== i));
   const updateEquipment = (i: number, v: string) =>
     setEquipmentList(equipmentList.map((eq, idx) => idx === i ? { ...eq, name: v } : eq));
+
+  const toggleFamily = (fid: string) =>
+    setSelectedFamilyIDs(prev => {
+      const next = new Set(prev);
+      if (next.has(fid)) { next.delete(fid); } else { next.add(fid); }
+      return next;
+    });
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -67,6 +84,7 @@ export default function RecipeForm({ editMode = false }: Props) {
       servings,
       ingredients: ingredients.filter(i => i.name.trim()),
       equipment: equipmentList.filter(e => e.name.trim()),
+      family_ids: [...selectedFamilyIDs],
     };
 
     try {
@@ -167,6 +185,26 @@ export default function RecipeForm({ editMode = false }: Props) {
           </Row>
         ))}
         <Button color="secondary" size="sm" outline onClick={addStep} className="mb-4">+ Add Step</Button>
+
+        {/* Family visibility */}
+        {families.length > 0 && (
+          <FormGroup>
+            <Label>Share with families</Label>
+            <div className="d-flex flex-column gap-1 mb-1">
+              {families.map(f => (
+                <label key={f.fid} className="d-flex align-items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={selectedFamilyIDs.has(f.fid)}
+                    onChange={() => toggleFamily(f.fid)}
+                  />
+                  {f.name}
+                </label>
+              ))}
+            </div>
+            <small className="text-muted">All recipes are public by default. Check families to also share privately.</small>
+          </FormGroup>
+        )}
 
         <div className="d-flex gap-2">
           <Button color="primary" type="submit" disabled={loading}>
