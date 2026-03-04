@@ -2,10 +2,16 @@ import { apiPrefix } from '../configuration';
 
 export interface Story {
   sid: string;
-  author_uid: string;
+  author_name: string;
   name: string;
   body: string;
   created_at: string;
+}
+
+export async function getStory(sid: string): Promise<Story> {
+  const res = await fetch(`${apiPrefix}/stories/${sid}`);
+  if (!res.ok) throw new Error('Story not found');
+  return res.json();
 }
 
 export async function createStory(token: string, name: string, body: string): Promise<Story> {

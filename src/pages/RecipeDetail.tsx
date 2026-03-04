@@ -2,8 +2,12 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Container, Button, Badge, Row, Col, Spinner } from 'reactstrap';
 import { getRecipe, deleteRecipe, Recipe } from '../api/recipes';
-import { useAuth } from '../context/AuthContext';
+import { getStory, Story } from '../api/stories';
+import { useAuth } from '../context/useAuth';
 import { RecipePhoto, listPhotos, uploadPhoto } from '../api/photos';
+import { RecipeUser, getRecipeUserData, setRating as setRatingAPI, setNotes as setNotesAPI, incrementCooked } from '../api/userdata';
+import StarRating from '../components/StarRating';
+import CommentsSection from '../components/CommentsSection';
 
 export default function RecipeDetail() {
   const { rid } = useParams<{ rid: string }>();
@@ -11,8 +15,12 @@ export default function RecipeDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [checkedIngredients, setCheckedIngredients] = useState<Set<string>>(new Set());
-  const [checkedSteps, setCheckedSteps] = useState<Set<number>>(new Set());
+  const [checkedSteps, setCheckedSteps] = useState<Set<string>>(new Set());
   const [photos, setPhotos] = useState<RecipePhoto[]>([]);
+  const [story, setStory] = useState<Story | null>(null);
+  const [recipeUser, setRecipeUser] = useState<RecipeUser | null>(null);
+  const [userRating, setUserRating] = useState<number | null>(null);
+  const [userNotes, setUserNotes] = useState('');
   const { user, token, isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
@@ -27,6 +35,26 @@ export default function RecipeDetail() {
   useEffect(() => {
     if (rid) listPhotos(rid).then(setPhotos).catch(() => {});
   }, [rid]);
+
+  useEffect(() => {
+    if (recipe?.story_id && !recipe.disable_story) {
+      getStory(recipe.story_id).then(setStory).catch(() => {});
+    } else {
+      setStory(null);
+    }
+  }, [recipe?.story_id, recipe?.disable_story]);
+
+  useEffect(() => {
+    if (isAuthenticated && token && rid) {
+      getRecipeUserData(token, rid)
+        .then(ru => {
+          setRecipeUser(ru);
+          setUserRating(ru.rating);
+          setUserNotes(ru.notes ?? '');
+        })
+        .catch(() => {});
+    }
+  }, [rid, isAuthenticated, token]);
 
   const handleDelete = async () => {
     if (!token || !rid || !confirm('Delete this recipe?')) return;
@@ -49,6 +77,27 @@ export default function RecipeDetail() {
     }
   };
 
+  const handleCooked = async () => {
+    if (!token || !rid) return;
+    try {
+      const updated = await incrementCooked(token, rid);
+      setRecipeUser(updated);
+    } catch {
+      setError('Failed to update cooked count');
+    }
+  };
+
+  const saveRating = async (r: number) => {
+    if (!token || !rid) return;
+    setUserRating(r);
+    await setRatingAPI(token, rid, r).catch(() => {});
+  };
+
+  const saveNotes = async () => {
+    if (!token || !rid) return;
+    await setNotesAPI(token, rid, userNotes).catch(() => {});
+  };
+
   const toggleIngredient = (key: string) =>
     setCheckedIngredients(prev => {
       const next = new Set(prev);
@@ -56,10 +105,10 @@ export default function RecipeDetail() {
       return next;
     });
 
-  const toggleStep = (i: number) =>
+  const toggleStep = (key: string) =>
     setCheckedSteps(prev => {
       const next = new Set(prev);
-      if (next.has(i)) { next.delete(i); } else { next.add(i); }
+      if (next.has(key)) { next.delete(key); } else { next.add(key); }
       return next;
     });
 
@@ -80,6 +129,10 @@ export default function RecipeDetail() {
         )}
       </div>
 
+      {recipe.author_username && (
+        <p className="text-muted small mb-3">By {recipe.author_username}</p>
+      )}
+
       {/* Photo — top */}
       <div className="mb-4 rounded overflow-hidden"
            style={{ background: 'var(--border-color)', minHeight: '260px',
@@ -91,15 +144,17 @@ export default function RecipeDetail() {
 
       {/* Photo upload (owner only) */}
       {isOwner && (
-        <div className="mb-4" >
+        <div className="mb-4">
           <input type="file" accept="image/*" onChange={handlePhotoUpload} className="form-control form-control-sm" style={{boxSizing: "content-box"}}/>
         </div>
       )}
 
       {/* Story banner */}
-      {recipe.story_id && !recipe.disable_story && (
+      {story && (
         <div className="story-banner mb-4">
-          <p className="mb-0 text-muted small">Story attached</p>
+          <p className="fw-semibold mb-1" style={{ color: 'var(--color-teal)' }}>{story.name}</p>
+          <p className="mb-1" style={{ fontStyle: 'italic' }}>{story.body}</p>
+          <p className="mb-0 text-muted small">— {story.author_name}</p>
         </div>
       )}
 
@@ -135,7 +190,6 @@ export default function RecipeDetail() {
       {recipe.ingredients && recipe.ingredients.length > 0 && (
         <section className="mb-4">
           <h4>Ingredients</h4>
-
           <div className="d-flex flex-column gap-2">
             {recipe.ingredients.map((ing, index) => {
               const key = ing.iid || ing.name;
@@ -182,26 +236,73 @@ export default function RecipeDetail() {
       )}
 
       {/* Steps */}
-      {recipe.steps && recipe.steps.length > 0 && (
+      {recipe.sections?.length > 0 && (
         <section className="mb-4">
           <h4>Steps</h4>
-          <ol>
-            {recipe.steps.map((step, i) => {
-              const done = checkedSteps.has(i);
-              return (
-                <li key={i} className="mb-2">
-                  <label className="d-flex align-items-start gap-2" style={{ cursor: 'pointer' }}>
-                    <input type="checkbox" className="mt-1" checked={done} onChange={() => toggleStep(i)} />
-                    <span style={{ opacity: done ? 0.7 : 1 }}>
-                      {step}
-                    </span>
-                  </label>
-                </li>
-              );
-            })}
-          </ol>
+          {recipe.sections.map((sec, sIdx) => (
+            <div key={sIdx} className="mb-3">
+              {sec.title && (
+                <h5 style={{ color: 'var(--color-teal)' }}>{sec.title}</h5>
+              )}
+              <ol>
+                {sec.steps.map((step, i) => {
+                  const key = `${sIdx}-${i}`;
+                  const done = checkedSteps.has(key);
+                  return (
+                    <li key={key} className="mb-2">
+                      <label className="d-flex align-items-start gap-2" style={{ cursor: 'pointer' }}>
+                        <input type="checkbox" className="mt-1" checked={done}
+                               onChange={() => toggleStep(key)} />
+                        <span style={{ opacity: done ? 0.7 : 1 }}>{step}</span>
+                      </label>
+                    </li>
+                  );
+                })}
+              </ol>
+            </div>
+          ))}
         </section>
       )}
+
+      {/* User interactions — authenticated users only */}
+      {isAuthenticated && (
+        <div className="mb-4">
+          <div className="mb-3 d-flex align-items-center gap-3">
+            <Button color="secondary" size="sm" onClick={handleCooked}>
+              I Cooked This!
+            </Button>
+            {(recipeUser?.times_cooked ?? 0) > 0 && (
+              <span className="text-muted small">Cooked {recipeUser!.times_cooked}×</span>
+            )}
+          </div>
+
+          <section className="mb-4">
+            <h5>Your Rating</h5>
+            <StarRating value={userRating} onChange={saveRating} />
+          </section>
+
+          <section className="mb-4">
+            <h5>Your Notes</h5>
+            <textarea
+              value={userNotes}
+              onChange={e => setUserNotes(e.target.value)}
+              onBlur={saveNotes}
+              style={{ resize: 'both', width: '100%', minHeight: '80px' }}
+              className="form-control"
+              placeholder="Add a personal note..."
+            />
+          </section>
+        </div>
+      )}
+
+      {/* Comments */}
+      <CommentsSection
+        rid={rid!}
+        recipeAuthorUid={recipe.author_uid}
+        isAuthenticated={isAuthenticated}
+        user={user}
+        token={token}
+      />
 
       <div className="mt-4">
         <Link to="/" className="text-muted small">&larr; Back to feed</Link>

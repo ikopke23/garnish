@@ -10,7 +10,7 @@ import {
 } from 'reactstrap';
 import { NavLink, useNavigate } from 'react-router-dom';
 import ThemeToggle from './ThemeToggle';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
 
 const NavBar: React.FunctionComponent = () => {
   const [isOpen, setIsOpen] = React.useState<boolean>(false);
@@ -47,6 +47,8 @@ const NavBar: React.FunctionComponent = () => {
                   </NavItem>
                 </>
               )}
+            </Nav>
+            <Nav navbar className="ms-auto">
               {isAuthenticated ? (
                 <>
                   <NavItem>
@@ -70,8 +72,6 @@ const NavBar: React.FunctionComponent = () => {
                   </NavItem>
                 </>
               )}
-            </Nav>
-            <Nav navbar className="ms-auto">
               <NavItem className="nav-link">
                 <ThemeToggle />
               </NavItem>

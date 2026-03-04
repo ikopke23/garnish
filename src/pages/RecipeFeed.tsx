@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Container, Row, Col, Card, CardBody, CardTitle, CardText, Input, InputGroup, Button, Badge } from 'reactstrap';
 import { Link } from 'react-router-dom';
 import { listRecipes, Recipe } from '../api/recipes';
+
 
 export default function RecipeFeed() {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
@@ -10,7 +11,12 @@ export default function RecipeFeed() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const lastFetchRef = useRef<number>(0);
+
   const fetchRecipes = async () => {
+    const now = Date.now();
+    if (now - lastFetchRef.current < 1000) return;
+    lastFetchRef.current = now;
     setLoading(true);
     setError(null);
     try {
@@ -23,7 +29,13 @@ export default function RecipeFeed() {
     }
   };
 
-  useEffect(() => { fetchRecipes(); });
+  useEffect(() => {
+    setLoading(true);
+    listRecipes(undefined, undefined)
+      .then(data => setRecipes(data))
+      .catch(() => setError('Failed to load recipes'))
+      .finally(() => setLoading(false));
+  }, []);
 
   return (
     <Container className="py-4">

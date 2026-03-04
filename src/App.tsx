@@ -1,7 +1,8 @@
 import { ReactNode } from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import PageContainer from './containers/PageContainer';
-import { AuthProvider, useAuth } from './context/AuthContext';
+import { AuthProvider } from './context/AuthContext';
+import { useAuth } from './context/useAuth';
 import 'csh-material-bootstrap/dist/csh-material-bootstrap.css';
 import './styles/theme.scss';
 

@@ -1,4 +1,4 @@
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
 import { NavItem } from 'reactstrap';
 import { NavLink } from 'react-router-dom';
 

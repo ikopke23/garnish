@@ -12,11 +12,18 @@ export interface RecipeEquipment {
   name: string;
 }
 
+export interface RecipeSection {
+  section_id?: string;
+  title: string;
+  steps: string[];
+}
+
 export interface Recipe {
   rid: string;
   author_uid: string;
+  author_username?: string;
   name: string;
-  steps: string[];
+  sections: RecipeSection[];
   prep_time: number;
   cook_time: number;
   servings: number;
@@ -25,16 +32,18 @@ export interface Recipe {
   ingredients: RecipeIngredient[];
   equipment: RecipeEquipment[];
   created_at: string;
+  is_public: boolean;
 }
 
 export interface RecipePayload {
   name: string;
-  steps: string[];
+  sections: RecipeSection[];
   prep_time: number;
   cook_time: number;
   servings: number;
   ingredients: RecipeIngredient[];
   equipment: RecipeEquipment[];
+  is_public?: boolean;
 }
 
 function authHeader(token: string | null): Record<string, string> {

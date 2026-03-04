@@ -1,0 +1,23 @@
+services:
+  larder:
+    build:
+      context: ./larder
+    environment:
+      DATABASE_URL: postgres://recipebook:recipebook@postgres:5432/recipebook
+      PORT: "8080"
+      JWT_SECRET: dev-secret
+    ports:
+      - "8080:5173"
+    volumes:
+      - uploads:/app/uploads
+
+  garnish:
+    build:
+      context: ./garnish
+    ports:
+      - "5173:8080"
+    depends_on:
+      - larder
+
+volumes:
+  uploads:

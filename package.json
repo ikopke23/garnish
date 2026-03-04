@@ -11,6 +11,8 @@
   },
   "dependencies": {
     "@axa-fr/react-oidc": "^7.22.29",
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
     "csh-material-bootstrap": "^4.6.2",
     "material-icons": "^1.13.12",
     "powerhooks": "^1.0.15",

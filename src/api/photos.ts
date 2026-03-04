@@ -11,7 +11,7 @@ export interface RecipePhoto {
 export async function listPhotos(rid: string): Promise<RecipePhoto[]> {
   const res = await fetch(`${apiPrefix}/recipes/${rid}/photos`);
   if (!res.ok) throw new Error('Failed to list photos');
-  return res.json();
+  return (await res.json() as RecipePhoto[]).map(p => ({ ...p, link: apiPrefix + p.link }));
 }
 
 export async function uploadPhoto(token: string, rid: string, file: File): Promise<RecipePhoto> {
@@ -23,5 +23,6 @@ export async function uploadPhoto(token: string, rid: string, file: File): Promi
     body: form,
   });
   if (!res.ok) throw new Error('Failed to upload photo');
-  return res.json();
+  const photo = await res.json() as RecipePhoto;
+  return { ...photo, link: apiPrefix + photo.link };
 }

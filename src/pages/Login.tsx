@@ -2,7 +2,7 @@ import { useState, FormEvent } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Container, Card, CardBody, Form, FormGroup, Label, Input, Button, Alert } from 'reactstrap';
 import { login } from '../api/auth';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
 
 export default function Login() {
   const [username, setUsername] = useState('');
@@ -46,6 +46,13 @@ export default function Login() {
               {loading ? 'Logging in...' : 'Login'}
             </Button>
           </Form>
+          <Button
+            disabled
+            className="w-100 mt-2"
+            style={{ backgroundColor: '#B0197E', borderColor: '#B0197E', color: '#fff', opacity: 1 }}
+          >
+            Login with CSH SSO
+          </Button>
           <p className="text-center mt-3 text-muted small">
             No account? <Link to="/register">Register</Link>
           </p>

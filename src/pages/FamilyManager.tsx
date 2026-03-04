@@ -2,7 +2,7 @@ import { useEffect, useState, FormEvent } from 'react';
 import {
   Container, Card, CardBody, Button, Input, Form, FormGroup, Alert, Spinner, Row, Col
 } from 'reactstrap';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
 import { listFamilies, createFamily, addMember, Family } from '../api/families';
 
 export default function FamilyManager() {

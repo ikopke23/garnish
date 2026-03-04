@@ -3,9 +3,11 @@ import { useNavigate, useParams } from 'react-router-dom';
 import {
   Container, Form, FormGroup, Label, Input, Button, Row, Col, Alert
 } from 'reactstrap';
-import { createRecipe, updateRecipe, getRecipe, RecipeIngredient, RecipeEquipment } from '../api/recipes';
+import { createRecipe, updateRecipe, getRecipe, assignStory, RecipeIngredient, RecipeEquipment, RecipeSection } from '../api/recipes';
 import { listFamilies, Family } from '../api/families';
-import { useAuth } from '../context/AuthContext';
+import { listStories, Story } from '../api/stories';
+import { useAuth } from '../context/useAuth';
+import ReorderSectionsModal from '../components/ReorderSectionsModal';
 
 interface Props {
   editMode?: boolean;
@@ -17,7 +19,8 @@ export default function RecipeForm({ editMode = false }: Props) {
   const navigate = useNavigate();
 
   const [name, setName] = useState('');
-  const [steps, setSteps] = useState<string[]>(['']);
+  const [sections, setSections] = useState<RecipeSection[]>([{ title: '', steps: [''] }]);
+  const [collapsedSections, setCollapsedSections] = useState<Set<number>>(new Set());
   const [prepTime, setPrepTime] = useState(0);
   const [cookTime, setCookTime] = useState(0);
   const [servings, setServings] = useState(1);
@@ -25,19 +28,27 @@ export default function RecipeForm({ editMode = false }: Props) {
   const [equipmentList, setEquipmentList] = useState<RecipeEquipment[]>([{ name: '' }]);
   const [families, setFamilies] = useState<Family[]>([]);
   const [selectedFamilyIDs, setSelectedFamilyIDs] = useState<Set<string>>(new Set());
+  const [reorderOpen, setReorderOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [isPublic, setIsPublic] = useState(true);
+  const [includeStory, setIncludeStory] = useState(false);
+  const [selectedStoryID, setSelectedStoryID] = useState('');
+  const [stories, setStories] = useState<Story[]>([]);
 
   useEffect(() => {
     if (editMode && rid) {
       getRecipe(rid).then(r => {
         setName(r.name);
-        setSteps(r.steps?.length ? r.steps : ['']);
+        setSections(r.sections?.length ? r.sections : [{ title: '', steps: [''] }]);
         setPrepTime(r.prep_time);
         setCookTime(r.cook_time);
         setServings(r.servings || 1);
         setIngredients(r.ingredients?.length ? r.ingredients : [{ name: '', quantity: 0, unit: '' }]);
         setEquipmentList(r.equipment?.length ? r.equipment : [{ name: '' }]);
+        setIsPublic(r.is_public !== false);
+        setIncludeStory(!r.disable_story);
+        setSelectedStoryID(r.story_id ?? '');
       }).catch(() => setError('Failed to load recipe'));
     }
   }, [editMode, rid]);
@@ -49,9 +60,36 @@ export default function RecipeForm({ editMode = false }: Props) {
       .catch(() => {});
   }, [token]);
 
-  const addStep = () => setSteps([...steps, '']);
-  const removeStep = (i: number) => setSteps(steps.filter((_, idx) => idx !== i));
-  const updateStep = (i: number, v: string) => setSteps(steps.map((s, idx) => idx === i ? v : s));
+  useEffect(() => {
+    if (!token) return;
+    listStories(token)
+      .then(setStories)
+      .catch(() => {});
+  }, [token]);
+
+  const handleReorderSave = (reordered: RecipeSection[]) => {
+    setSections(reordered);
+    setReorderOpen(false);
+  };
+
+  const addSection = () => setSections([...sections, { title: '', steps: [''] }]);
+  const removeSection = (si: number) => setSections(sections.filter((_, i) => i !== si));
+  const updateSectionTitle = (si: number, v: string) =>
+    setSections(sections.map((s, i) => i === si ? { ...s, title: v } : s));
+
+  const addStep = (si: number) =>
+    setSections(sections.map((s, i) => i === si ? { ...s, steps: [...s.steps, ''] } : s));
+  const removeStep = (si: number, stepIdx: number) =>
+    setSections(sections.map((s, i) => i === si ? { ...s, steps: s.steps.filter((_, j) => j !== stepIdx) } : s));
+  const updateStep = (si: number, stepIdx: number, v: string) =>
+    setSections(sections.map((s, i) => i === si ? { ...s, steps: s.steps.map((st, j) => j === stepIdx ? v : st) } : s));
+
+  const toggleSectionCollapse = (si: number) =>
+    setCollapsedSections(prev => {
+      const next = new Set(prev);
+      if (next.has(si)) { next.delete(si); } else { next.add(si); }
+      return next;
+    });
 
   const addIngredient = () => setIngredients([...ingredients, { name: '', quantity: 0, unit: '' }]);
   const removeIngredient = (i: number) => setIngredients(ingredients.filter((_, idx) => idx !== i));
@@ -78,13 +116,18 @@ export default function RecipeForm({ editMode = false }: Props) {
 
     const payload = {
       name,
-      steps: steps.filter(s => s.trim()),
+      sections: sections.map((s, si) => ({
+        title: s.title.trim(),
+        steps: s.steps.filter(st => st.trim()),
+        position: si,
+      })).filter(s => s.title.length > 0 || s.steps.length > 0),
       prep_time: prepTime,
       cook_time: cookTime,
       servings,
       ingredients: ingredients.filter(i => i.name.trim()),
       equipment: equipmentList.filter(e => e.name.trim()),
       family_ids: [...selectedFamilyIDs],
+      is_public: isPublic,
     };
 
     try {
@@ -94,6 +137,12 @@ export default function RecipeForm({ editMode = false }: Props) {
       } else {
         recipe = await createRecipe(token, payload);
       }
+      await assignStory(
+        token,
+        recipe.rid,
+        includeStory && selectedStoryID ? selectedStoryID : null,
+        !includeStory,
+      );
       navigate(`/recipes/${recipe.rid}`);
     } catch {
       setError('Failed to save recipe');
@@ -155,7 +204,7 @@ export default function RecipeForm({ editMode = false }: Props) {
             </Col>
           </Row>
         ))}
-        <Button color="secondary" size="sm" outline onClick={addIngredient} className="mb-3">+ Add Ingredient</Button>
+        <Button color="primary" size="sm" outline onClick={addIngredient} className="mb-3">+ Add Ingredient</Button>
 
         {/* Equipment */}
         <h5 className="mt-3">Equipment</h5>
@@ -169,42 +218,114 @@ export default function RecipeForm({ editMode = false }: Props) {
             </Col>
           </Row>
         ))}
-        <Button color="secondary" size="sm" outline onClick={addEquipment} className="mb-3">+ Add Equipment</Button>
+        <Button color="primary" size="sm" outline onClick={addEquipment} className="mb-3">+ Add Equipment</Button>
 
         {/* Steps */}
         <h5 className="mt-3">Steps</h5>
-        {steps.map((step, i) => (
-          <Row key={i} className="mb-2 g-2 align-items-start">
-            <Col xs={1} className="text-muted pt-2 text-end">{i + 1}.</Col>
-            <Col xs={9}>
-              <Input type="textarea" rows={2} placeholder={`Step ${i + 1}`} value={step} onChange={e => updateStep(i, e.target.value)} />
-            </Col>
-            <Col xs={2}>
-              <Button color="danger" size="sm" outline onClick={() => removeStep(i)} disabled={steps.length === 1}>&#x2715;</Button>
-            </Col>
-          </Row>
-        ))}
-        <Button color="secondary" size="sm" outline onClick={addStep} className="mb-4">+ Add Step</Button>
+        {sections.map((section, si) => {
+          const isCollapsed = collapsedSections.has(si);
+          return (
+            <div key={si} className="recipe-section border rounded p-3 mb-3">
+              <div className="d-flex align-items-center gap-2 mb-2">
+                <Button color="secondary" size="sm" outline onClick={() => toggleSectionCollapse(si)}>
+                  {isCollapsed ? '▶' : '▼'}
+                </Button>
+                <Input
+                  placeholder="Section title (e.g. For the Sauce)"
+                  value={section.title}
+                  onChange={e => updateSectionTitle(si, e.target.value)}
+                  style={{ fontWeight: 600 }}
+                />
+                <Button color="danger" size="sm" outline onClick={() => removeSection(si)}
+                        disabled={sections.length === 1}>&#x2715;</Button>
+              </div>
+              {!isCollapsed && (
+                <>
+                  {section.steps.map((step, i) => (
+                    <Row key={i} className="mb-2 g-2 align-items-start">
+                      <Col xs={1} className="text-muted pt-2 text-end">{i + 1}.</Col>
+                      <Col xs={9}>
+                        <Input type="textarea" rows={2} placeholder={`Step ${i + 1}`}
+                               value={step} onChange={e => updateStep(si, i, e.target.value)} />
+                      </Col>
+                      <Col xs={2}>
+                        <Button color="danger" size="sm" outline onClick={() => removeStep(si, i)}
+                                disabled={section.steps.length === 1}>&#x2715;</Button>
+                      </Col>
+                    </Row>
+                  ))}
+                  <Button color="secondary" size="sm" outline onClick={() => addStep(si)}>+ Add Step</Button>
+                </>
+              )}
+            </div>
+          );
+        })}
+        <div className="d-flex gap-2 mb-4">
+          <Button color="primary" size="sm" outline onClick={addSection}>
+            + Add Section
+          </Button>
+          {sections.length > 1 && (
+            <Button color="secondary" size="sm" outline onClick={() => setReorderOpen(true)}>
+              ⠿ Reorder Sections
+            </Button>
+          )}
+        </div>
+
+        <ReorderSectionsModal
+          isOpen={reorderOpen}
+          sections={sections}
+          onSave={handleReorderSave}
+          onCancel={() => setReorderOpen(false)}
+        />
 
         {/* Family visibility */}
-        {families.length > 0 && (
-          <FormGroup>
-            <Label>Share with families</Label>
-            <div className="d-flex flex-column gap-1 mb-1">
-              {families.map(f => (
-                <label key={f.fid} className="d-flex align-items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={selectedFamilyIDs.has(f.fid)}
-                    onChange={() => toggleFamily(f.fid)}
-                  />
-                  {f.name}
-                </label>
+        <FormGroup>
+          <Label>Visibility</Label>
+
+          <div className="sharing-cards mb-3">
+            <label className={`sharing-card${isPublic ? ' active' : ''}`}>
+              <input type="checkbox" checked={isPublic} onChange={e => setIsPublic(e.target.checked)} />
+              <span>Public</span>
+            </label>
+            {families.map(f => (
+              <label key={f.fid} className={`sharing-card${selectedFamilyIDs.has(f.fid) ? ' active' : ''}`}>
+                <input type="checkbox" checked={selectedFamilyIDs.has(f.fid)} onChange={() => toggleFamily(f.fid)} />
+                <span>{f.name}</span>
+              </label>
+            ))}
+          </div>
+
+          <small className="text-muted">
+            Uncheck Public to limit visibility to selected families only.
+          </small>
+        </FormGroup>
+
+        {/* Story */}
+        <FormGroup className="mt-3">
+          <div className="d-flex align-items-center gap-2 mb-2">
+            <Input
+              type="switch"
+              id="includeStory"
+              checked={includeStory}
+              onChange={e => setIncludeStory(e.target.checked)}
+            />
+            <Label for="includeStory" className="mb-0">Include story</Label>
+          </div>
+          {includeStory && (
+            <Input
+              type="select"
+              value={selectedStoryID}
+              onChange={e => setSelectedStoryID(e.target.value)}
+            >
+              <option value="">— no story selected —</option>
+              {stories.map(s => (
+                <option key={s.sid} value={s.sid}>
+                  {s.name} — {s.author_name}
+                </option>
               ))}
-            </div>
-            <small className="text-muted">All recipes are public by default. Check families to also share privately.</small>
-          </FormGroup>
-        )}
+            </Input>
+          )}
+        </FormGroup>
 
         <div className="d-flex gap-2">
           <Button color="primary" type="submit" disabled={loading}>

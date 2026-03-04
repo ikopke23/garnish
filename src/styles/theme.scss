@@ -65,6 +65,41 @@ body:not(.dark-theme) {
     color: #7a4800;
     border-color: rgba(255, 193, 0, 0.45);
   }
+
+  .recipe-section {
+    border-color: var(--color-teal) !important;
+    box-shadow: 0 2px 8px rgba(255, 130, 0, 0.2);
+  }
+
+  .btn-outline-secondary {
+    color: #5c3d00 !important;
+    border-color: #8a6000 !important;
+    background-color: transparent !important;
+    &:hover {
+      background-color: rgba(92, 61, 0, 0.1) !important;
+      color: #5c3d00 !important;
+    }
+  }
+
+  .btn-outline-danger {
+    color: #990000 !important;
+    border-color: #cc0000 !important;
+    background-color: transparent !important;
+    &:hover {
+      background-color: rgba(153, 0, 0, 0.1) !important;
+      color: #990000 !important;
+    }
+  }
+
+  .btn-outline-warning {
+    color: #7a4800 !important;
+    border-color: #b36b00 !important;
+    background-color: transparent !important;
+    &:hover {
+      background-color: rgba(122, 72, 0, 0.1) !important;
+      color: #7a4800 !important;
+    }
+  }
 }
 
 // Dark mode
@@ -131,6 +166,25 @@ body.dark-theme {
       box-shadow: 0 0 0 0.2rem rgba(255, 193, 0, 0.2);
     }
   }
+
+  // Modal
+  .modal-content {
+    background-color: var(--card-bg);
+    color: var(--text-color);
+    border-color: var(--border-color);
+  }
+  .modal-header, .modal-footer {
+    border-color: var(--border-color);
+  }
+  .btn-close {
+    filter: invert(1);
+  }
+
+  // Reorder row
+  .reorder-row {
+    background-color: #1e180c;
+    border: 1px solid var(--border-color);
+  }
 }
 
 // Shared styles
@@ -182,6 +236,36 @@ body.dark-theme {
   }
 }
 
+.btn-outline-primary {
+  background-color: var(--color-teal) !important;
+  border-color: var(--color-teal) !important;
+  border-width: 2px !important;
+  color: #0A0903 !important;
+  box-shadow: 0 2px 10px rgba(255, 130, 0, 0.38) !important;
+  &:hover {
+    background-color: transparent !important;
+    border-color: var(--color-teal) !important;
+    color: var(--color-teal) !important;
+    box-shadow: 0 1px 6px rgba(255, 130, 0, 0.22) !important;
+  }
+  @media (max-width: 768px) {
+    border-width: 2px !important;
+    box-shadow: 0 1px 4px rgba(255, 130, 0, 0.15) !important;
+  }
+}
+
+.form-switch .form-check-input {
+  border-color: var(--color-teal) !important;
+  &:checked {
+    background-color: var(--color-teal) !important;
+    border-color: var(--color-teal) !important;
+  }
+  &:focus {
+    box-shadow: 0 0 0 0.2rem rgba(255, 130, 0, 0.25) !important;
+    border-color: var(--color-teal) !important;
+  }
+}
+
 .form-control {
   padding: 0.5rem 0.75rem;
 }
@@ -189,3 +273,40 @@ body.dark-theme {
 .text-teal { color: var(--color-teal) !important; }
 .text-sand { color: var(--color-sand) !important; }
 .text-blue { color: var(--color-blue) !important; }
+
+.reorder-row {
+  background-color: var(--card-bg);
+  border: 1px solid rgba(255, 130, 0, 0.3);
+}
+
+/* ── Sharing: Glowing Cards ── */
+.sharing-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.sharing-card {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.45rem 0.85rem;
+  border-radius: 6px;
+  border: 1.5px solid var(--border-color);
+  background: var(--card-bg);
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  input[type="checkbox"] { display: none; }
+  &.active {
+    border-color: var(--color-teal);
+    box-shadow: 0 0 8px rgba(255, 130, 0, 0.35);
+    color: var(--color-teal);
+    font-weight: 600;
+    &::before {
+      content: '✓ ';
+    }
+  }
+  &:hover:not(.active) {
+    border-color: rgba(255, 130, 0, 0.5);
+  }
+}
+
