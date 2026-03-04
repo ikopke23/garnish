@@ -8,6 +8,12 @@ dependencies:
   '@axa-fr/react-oidc':
     specifier: ^7.22.29
     version: 7.22.32(react@18.3.1)
+  '@dnd-kit/core':
+    specifier: ^6.3.1
+    version: 6.3.1(react-dom@18.3.1)(react@18.3.1)
+  '@dnd-kit/sortable':
+    specifier: ^10.0.0
+    version: 10.0.0(@dnd-kit/core@6.3.1)(react@18.3.1)
   csh-material-bootstrap:
     specifier: ^4.6.2
     version: 4.6.2
@@ -15,8 +21,8 @@ dependencies:
     specifier: ^1.13.12
     version: 1.13.12
   powerhooks:
-    specifier: ^1.0.15
-    version: 1.0.15
+    specifier: ^2.0.1
+    version: 2.0.1
   react:
     specifier: ^18.3.1
     version: 18.3.1
@@ -134,6 +140,49 @@ packages:
   /@bufbuild/protobuf@2.2.0:
     resolution: {integrity: sha512-+imAQkHf7U/Rwvu0wk1XWgsP3WnpCWmK7B48f0XqSNzgk64+grljTKC7pnO/xBiEMUziF7vKRfbBnOQhg126qQ==}
     dev: true
+
+  /@dnd-kit/accessibility@3.1.1(react@18.3.1):
+    resolution: {integrity: sha512-2P+YgaXF+gRsIihwwY1gCsQSYnu9Zyj2py8kY5fFvUM1qm2WA2u639R6YNVfU4GWr+ZM5mqEsfHZZLoRONbemw==}
+    peerDependencies:
+      react: '>=16.8.0'
+    dependencies:
+      react: 18.3.1
+      tslib: 2.8.1
+    dev: false
+
+  /@dnd-kit/core@6.3.1(react-dom@18.3.1)(react@18.3.1):
+    resolution: {integrity: sha512-xkGBRQQab4RLwgXxoqETICr6S5JlogafbhNsidmrkVv2YRs5MLwpjoF2qpiGjQt8S9AoxtIV603s0GIUpY5eYQ==}
+    peerDependencies:
+      react: '>=16.8.0'
+      react-dom: '>=16.8.0'
+    dependencies:
+      '@dnd-kit/accessibility': 3.1.1(react@18.3.1)
+      '@dnd-kit/utilities': 3.2.2(react@18.3.1)
+      react: 18.3.1
+      react-dom: 18.3.1(react@18.3.1)
+      tslib: 2.8.1
+    dev: false
+
+  /@dnd-kit/sortable@10.0.0(@dnd-kit/core@6.3.1)(react@18.3.1):
+    resolution: {integrity: sha512-+xqhmIIzvAYMGfBYYnbKuNicfSsk4RksY2XdmJhT+HAC01nix6fHCztU68jooFiMUB01Ky3F0FyOvhG/BZrWkg==}
+    peerDependencies:
+      '@dnd-kit/core': ^6.3.0
+      react: '>=16.8.0'
+    dependencies:
+      '@dnd-kit/core': 6.3.1(react-dom@18.3.1)(react@18.3.1)
+      '@dnd-kit/utilities': 3.2.2(react@18.3.1)
+      react: 18.3.1
+      tslib: 2.8.1
+    dev: false
+
+  /@dnd-kit/utilities@3.2.2(react@18.3.1):
+    resolution: {integrity: sha512-+MKAJEOfaBe5SmV6t34p80MMKhjvUz0vRrvVJbPT0WElzaOJ/1xs+D+KDv+tD/NE5ujfrChEcshd4fLn0wpiqg==}
+    peerDependencies:
+      react: '>=16.8.0'
+    dependencies:
+      react: 18.3.1
+      tslib: 2.8.1
+    dev: false
 
   /@esbuild/aix-ppc64@0.21.5:
     resolution: {integrity: sha512-1SDgH6ZSPTlggy1yI6+Dbkiz8xzpHJEVAlF/AM1tHPLsf5STom9rwtjE4hKAF20FfXXNTFqEYXyJNWh1GiZedQ==}
@@ -1303,12 +1352,12 @@ packages:
       es5-ext: 0.10.64
     dev: false
 
-  /evt@2.5.7:
-    resolution: {integrity: sha512-dr7Wd16ry5F8WNU1xXLKpFpO3HsoAGg8zC48e08vDdzMzGWCP9/QFGt1PQptEEDh8SwYP3EL8M+d/Gb0kgUp6g==}
+  /evt@2.5.9:
+    resolution: {integrity: sha512-GpjX476FSlttEGWHT8BdVMoI8wGXQGbEOtKcP4E+kggg+yJzXBZN2n4x7TS/zPBJ1DZqWI+rguZZApjjzQ0HpA==}
     dependencies:
       minimal-polyfills: 2.2.3
       run-exclusive: 2.2.19
-      tsafe: 1.7.5
+      tsafe: 1.8.12
     dev: false
 
   /ext@1.7.0:
@@ -1711,12 +1760,12 @@ packages:
       source-map-js: 1.2.1
     dev: true
 
-  /powerhooks@1.0.15:
-    resolution: {integrity: sha512-rTOGCA7egw/yjVaclOMrKTgTV6kAbmx8IY1t8CN8C2hnhInlAawAvLqaKxm0Qc997jnqI8SlQqdVFpLVhvvsXw==}
+  /powerhooks@2.0.1:
+    resolution: {integrity: sha512-G4oStGCXGHBexDEAlRfrYRESgticY6oOOtkz9AEwmUt6uItZwNqoDELWyZiEoHjOrwuLDMd6+S0IHj9lBLz9dA==}
     dependencies:
-      evt: 2.5.7
+      evt: 2.5.9
       memoizee: 0.4.17
-      tsafe: 1.7.5
+      tsafe: 1.8.12
     dev: false
 
   /prelude-ls@1.2.1:
@@ -1906,7 +1955,7 @@ packages:
   /rxjs@7.8.1:
     resolution: {integrity: sha512-AA3TVj+0A2iuIoQkWEK/tqFjBq2j+6PO6Y0zJcvzLAFhEFIO3HL0vls9hWLncZbAAbK0mar7oZ4V079I/qPMxg==}
     dependencies:
-      tslib: 2.7.0
+      tslib: 2.8.1
     dev: true
 
   /sass-embedded-android-arm64@1.79.5:
@@ -2222,13 +2271,12 @@ packages:
       typescript: 5.5.4
     dev: true
 
-  /tsafe@1.7.5:
-    resolution: {integrity: sha512-tbNyyBSbwfbilFfiuXkSOj82a6++ovgANwcoqBAcO9/REPoZMEQoE8kWPeO0dy5A2D/2Lajr8Ohue5T0ifIvLQ==}
+  /tsafe@1.8.12:
+    resolution: {integrity: sha512-nFRqW0ttu/2o6XTXsHiVZWJBCOaxhVqZLg7dgs3coZNsCMPXPfwz+zPHAQA+70fNnVJLAPg1EgGIqK9Q84tvAw==}
     dev: false
 
-  /tslib@2.7.0:
-    resolution: {integrity: sha512-gLXCKdN1/j47AiHiOkJN69hJmcbGTHI0ImLmbYLHykhgeN0jVGola9yVjFgzCUklsZQMW55o+dW7IXv3RCXDzA==}
-    dev: true
+  /tslib@2.8.1:
+    resolution: {integrity: sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w==}
 
   /type-check@0.4.0:
     resolution: {integrity: sha512-XleUoc9uwGXqjWwXaUTZAmzMcFZ5858QA2vvx1Ur5xIcixXIP+8LnFDgRplU30us6teqdlskFfu+ae4K79Ooew==}
