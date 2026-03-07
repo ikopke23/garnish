@@ -190,25 +190,48 @@ export default function RecipeDetail() {
       {recipe.ingredients && recipe.ingredients.length > 0 && (
         <section className="mb-4">
           <h4>Ingredients</h4>
-          <div className="d-flex flex-column gap-2">
-            {recipe.ingredients.map((ing, index) => {
-              const key = ing.iid || ing.name;
-              const done = checkedIngredients.has(key);
-              return (
-                <label
-                  key={key}
-                  className={`ingredient-chip ingredient-chip-${index % 2} d-flex align-items-center gap-2`}
-                  style={{ cursor: 'pointer', opacity: done ? 0.7 : 1 }}
-                >
-                  <input type="checkbox" checked={done} onChange={() => toggleIngredient(key)} />
-                  {` `}
-                  {ing.quantity > 0 && `${ing.quantity} `}
-                  {ing.unit && `${ing.unit} of `}
-                  {ing.name}
-                </label>
-              );
-            })}
-          </div>
+          {(() => {
+            // Group ingredients by section, preserving order
+            const groups: { label: string; ings: typeof recipe.ingredients }[] = [];
+            const seen = new Map<string, typeof groups[0]>();
+            for (const ing of recipe.ingredients) {
+              const key = ing.section ?? '';
+              if (!seen.has(key)) {
+                const g = { label: key, ings: [] as typeof recipe.ingredients };
+                groups.push(g);
+                seen.set(key, g);
+              }
+              seen.get(key)!.ings.push(ing);
+            }
+            let globalIdx = 0;
+            return groups.map((group, gi) => (
+              <div key={gi} className="mb-3">
+                {group.label && (
+                  <div className="ing-section-header mb-2">{group.label}</div>
+                )}
+                <div className="d-flex flex-column gap-2 ps-2">
+                  {group.ings.map(ing => {
+                    const key = ing.iid || ing.name;
+                    const done = checkedIngredients.has(key);
+                    const chipIdx = globalIdx++ % 2;
+                    return (
+                      <label
+                        key={key}
+                        className={`ingredient-chip ingredient-chip-${chipIdx} d-flex align-items-center gap-2`}
+                        style={{ cursor: 'pointer', opacity: done ? 0.7 : 1 }}
+                      >
+                        <input type="checkbox" checked={done} onChange={() => toggleIngredient(key)} />
+                        {` `}
+                        {ing.quantity > 0 && `${ing.quantity} `}
+                        {ing.unit && `${ing.unit} of `}
+                        {ing.name}
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+            ));
+          })()}
         </section>
       )}
 

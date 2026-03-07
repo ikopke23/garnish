@@ -3,11 +3,11 @@ import { useNavigate, useParams } from 'react-router-dom';
 import {
   Container, Form, FormGroup, Label, Input, Button, Row, Col, Alert
 } from 'reactstrap';
-import { createRecipe, updateRecipe, getRecipe, assignStory, RecipeIngredient, RecipeEquipment, RecipeSection } from '../api/recipes';
+import { createRecipe, updateRecipe, getRecipe, assignStory, RecipeIngredient, RecipeEquipment, RecipeSection, IngredientGroup } from '../api/recipes';
 import { listFamilies, Family } from '../api/families';
 import { listStories, Story } from '../api/stories';
 import { useAuth } from '../context/useAuth';
-import ReorderSectionsModal from '../components/ReorderSectionsModal';
+import ReorderModal from '../components/ReorderModal';
 
 interface Props {
   editMode?: boolean;
@@ -24,7 +24,10 @@ export default function RecipeForm({ editMode = false }: Props) {
   const [prepTime, setPrepTime] = useState(0);
   const [cookTime, setCookTime] = useState(0);
   const [servings, setServings] = useState(1);
-  const [ingredients, setIngredients] = useState<RecipeIngredient[]>([{ name: '', quantity: 0, unit: '' }]);
+  const [ingredientGroups, setIngredientGroups] = useState<IngredientGroup[]>([
+    { label: '', ingredients: [{ name: '', quantity: 0, unit: '' }] }
+  ]);
+  const [reorderIngsOpen, setReorderIngsOpen] = useState(false);
   const [equipmentList, setEquipmentList] = useState<RecipeEquipment[]>([{ name: '' }]);
   const [families, setFamilies] = useState<Family[]>([]);
   const [selectedFamilyIDs, setSelectedFamilyIDs] = useState<Set<string>>(new Set());
@@ -44,11 +47,24 @@ export default function RecipeForm({ editMode = false }: Props) {
         setPrepTime(r.prep_time);
         setCookTime(r.cook_time);
         setServings(r.servings || 1);
-        setIngredients(r.ingredients?.length ? r.ingredients : [{ name: '', quantity: 0, unit: '' }]);
         setEquipmentList(r.equipment?.length ? r.equipment : [{ name: '' }]);
         setIsPublic(r.is_public !== false);
         setIncludeStory(!r.disable_story);
         setSelectedStoryID(r.story_id ?? '');
+
+        // Reconstruct ingredient groups from flat array
+        const groups: IngredientGroup[] = [];
+        const seen = new Map<string, IngredientGroup>();
+        for (const ing of (r.ingredients ?? [])) {
+          const key = ing.section ?? '';
+          if (!seen.has(key)) {
+            const g: IngredientGroup = { label: key, ingredients: [] };
+            groups.push(g);
+            seen.set(key, g);
+          }
+          seen.get(key)!.ingredients.push(ing);
+        }
+        setIngredientGroups(groups.length ? groups : [{ label: '', ingredients: [{ name: '', quantity: 0, unit: '' }] }]);
       }).catch(() => setError('Failed to load recipe'));
     }
   }, [editMode, rid]);
@@ -91,10 +107,22 @@ export default function RecipeForm({ editMode = false }: Props) {
       return next;
     });
 
-  const addIngredient = () => setIngredients([...ingredients, { name: '', quantity: 0, unit: '' }]);
-  const removeIngredient = (i: number) => setIngredients(ingredients.filter((_, idx) => idx !== i));
-  const updateIngredient = (i: number, field: keyof RecipeIngredient, v: string | number) =>
-    setIngredients(ingredients.map((ing, idx) => idx === i ? { ...ing, [field]: v } : ing));
+  // Ingredient group helpers
+  const addIngGroup = () =>
+    setIngredientGroups([...ingredientGroups, { label: '', ingredients: [{ name: '', quantity: 0, unit: '' }] }]);
+  const removeIngGroup = (gi: number) =>
+    setIngredientGroups(ingredientGroups.filter((_, i) => i !== gi));
+  const updateGroupLabel = (gi: number, v: string) =>
+    setIngredientGroups(ingredientGroups.map((g, i) => i === gi ? { ...g, label: v } : g));
+  const addIngredient = (gi: number) =>
+    setIngredientGroups(ingredientGroups.map((g, i) =>
+      i === gi ? { ...g, ingredients: [...g.ingredients, { name: '', quantity: 0, unit: '' }] } : g));
+  const removeIngredient = (gi: number, ii: number) =>
+    setIngredientGroups(ingredientGroups.map((g, i) =>
+      i === gi ? { ...g, ingredients: g.ingredients.filter((_, j) => j !== ii) } : g));
+  const updateIngredient = (gi: number, ii: number, field: keyof RecipeIngredient, v: string | number) =>
+    setIngredientGroups(ingredientGroups.map((g, i) =>
+      i === gi ? { ...g, ingredients: g.ingredients.map((ing, j) => j === ii ? { ...ing, [field]: v } : ing) } : g));
 
   const addEquipment = () => setEquipmentList([...equipmentList, { name: '' }]);
   const removeEquipment = (i: number) => setEquipmentList(equipmentList.filter((_, idx) => idx !== i));
@@ -124,7 +152,13 @@ export default function RecipeForm({ editMode = false }: Props) {
       prep_time: prepTime,
       cook_time: cookTime,
       servings,
-      ingredients: ingredients.filter(i => i.name.trim()),
+      ingredients: ingredientGroups.flatMap((g, gi) =>
+        g.ingredients.filter(i => i.name.trim()).map((ing, ii) => ({
+          ...ing,
+          section: g.label.trim(),
+          position: gi * 1000 + ii,
+        }))
+      ),
       equipment: equipmentList.filter(e => e.name.trim()),
       family_ids: [...selectedFamilyIDs],
       is_public: isPublic,
@@ -150,6 +184,8 @@ export default function RecipeForm({ editMode = false }: Props) {
       setLoading(false);
     }
   };
+
+  const showIngReorder = ingredientGroups.length > 1 || ingredientGroups.some(g => g.ingredients.length > 1);
 
   return (
     <Container className="py-4" style={{ maxWidth: '700px' }}>
@@ -188,23 +224,50 @@ export default function RecipeForm({ editMode = false }: Props) {
 
         {/* Ingredients */}
         <h5 className="mt-3">Ingredients</h5>
-        {ingredients.map((ing, i) => (
-          <Row key={i} className="mb-2 g-2 align-items-center">
-            <Col md={5}>
-              <Input placeholder="Ingredient name" value={ing.name} onChange={e => updateIngredient(i, 'name', e.target.value)} />
-            </Col>
-            <Col md={2}>
-              <Input type="number" placeholder="Qty" min={0} step="0.25" value={ing.quantity || ''} onChange={e => updateIngredient(i, 'quantity', +e.target.value)} />
-            </Col>
-            <Col md={3}>
-              <Input placeholder="Unit (cups, g...)" value={ing.unit} onChange={e => updateIngredient(i, 'unit', e.target.value)} />
-            </Col>
-            <Col md={2}>
-              <Button color="danger" size="sm" outline onClick={() => removeIngredient(i)} disabled={ingredients.length === 1}>&#x2715;</Button>
-            </Col>
-          </Row>
+        {ingredientGroups.map((group, gi) => (
+          <div key={gi} className="recipe-section border rounded p-3 mb-3">
+            <div className="d-flex align-items-center gap-2 mb-2">
+              <Input
+                placeholder="Section (e.g. For the sauce) — optional"
+                value={group.label}
+                onChange={e => updateGroupLabel(gi, e.target.value)}
+                style={{ fontWeight: group.label ? 600 : undefined }}
+              />
+              <Button
+                color="danger" size="sm" outline
+                onClick={() => removeIngGroup(gi)}
+                disabled={ingredientGroups.length === 1}
+              >&#x2715;</Button>
+            </div>
+            {group.ingredients.map((ing, ii) => (
+              <Row key={ii} className="mb-2 g-2 align-items-center">
+                <Col md={5}>
+                  <Input placeholder="Ingredient name" value={ing.name} onChange={e => updateIngredient(gi, ii, 'name', e.target.value)} />
+                </Col>
+                <Col md={2}>
+                  <Input type="number" placeholder="Qty" min={0} step="0.25" value={ing.quantity || ''} onChange={e => updateIngredient(gi, ii, 'quantity', +e.target.value)} />
+                </Col>
+                <Col md={3}>
+                  <Input placeholder="Unit (cups, g...)" value={ing.unit} onChange={e => updateIngredient(gi, ii, 'unit', e.target.value)} />
+                </Col>
+                <Col md={2}>
+                  <Button color="danger" size="sm" outline onClick={() => removeIngredient(gi, ii)} disabled={group.ingredients.length === 1 && ingredientGroups.length === 1}>&#x2715;</Button>
+                </Col>
+              </Row>
+            ))}
+            <Button color="primary" size="sm" outline onClick={() => addIngredient(gi)}>+ Add Ingredient</Button>
+          </div>
         ))}
-        <Button color="primary" size="sm" outline onClick={addIngredient} className="mb-3">+ Add Ingredient</Button>
+        <div className="d-flex gap-2 mb-3">
+          <Button color="primary" size="sm" outline onClick={addIngGroup}>
+            + Add Section
+          </Button>
+          {showIngReorder && (
+            <Button size="sm" outline color="secondary" onClick={() => setReorderIngsOpen(true)}>
+              ⠿ Reorder Ingredients
+            </Button>
+          )}
+        </div>
 
         {/* Equipment */}
         <h5 className="mt-3">Equipment</h5>
@@ -271,11 +334,20 @@ export default function RecipeForm({ editMode = false }: Props) {
           )}
         </div>
 
-        <ReorderSectionsModal
+        <ReorderModal
+          mode="sections"
           isOpen={reorderOpen}
-          sections={sections}
+          items={sections}
           onSave={handleReorderSave}
           onCancel={() => setReorderOpen(false)}
+        />
+
+        <ReorderModal
+          mode="ingredients"
+          isOpen={reorderIngsOpen}
+          items={ingredientGroups}
+          onSave={groups => { setIngredientGroups(groups); setReorderIngsOpen(false); }}
+          onCancel={() => setReorderIngsOpen(false)}
         />
 
         {/* Family visibility */}

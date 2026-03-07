@@ -279,6 +279,15 @@ body.dark-theme {
   border: 1px solid rgba(255, 130, 0, 0.3);
 }
 
+.ing-section-header {
+  font-weight: 600;
+  font-size: 1.05rem;
+  padding-left: 0.65rem;
+  border-left: 3px solid var(--color-teal);
+  color: var(--color-teal);
+  margin-bottom: 0.4rem;
+}
+
 /* ── Sharing: Glowing Cards ── */
 .sharing-cards {
   display: flex;

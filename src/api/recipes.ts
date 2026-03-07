@@ -5,6 +5,13 @@ export interface RecipeIngredient {
   name: string;
   quantity: number;
   unit: string;
+  section?: string;
+  position?: number;
+}
+
+export interface IngredientGroup {
+  label: string;
+  ingredients: RecipeIngredient[];
 }
 
 export interface RecipeEquipment {

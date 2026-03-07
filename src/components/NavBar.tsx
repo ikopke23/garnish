@@ -48,7 +48,8 @@ const NavBar: React.FunctionComponent = () => {
                 </>
               )}
             </Nav>
-            <Nav navbar className="ms-auto">
+
+            <Nav navbar style={{justifyContent: "flex-end"}}>
               {isAuthenticated ? (
                 <>
                   <NavItem>
