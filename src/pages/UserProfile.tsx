@@ -18,7 +18,7 @@ export default function UserProfile() {
     if (!user || !token) return;
 
     Promise.all([
-      listRecipes().catch(() => [] as Recipe[]),
+      listRecipes(token).catch(() => [] as Recipe[]),
       getUserComments(user.uid).catch(() => [] as CommentWithRecipe[]),
       getUserStats(user.uid).catch(() => null),
       listFamilies(token).catch(() => [] as Family[]),

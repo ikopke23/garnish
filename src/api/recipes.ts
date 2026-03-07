@@ -57,11 +57,13 @@ function authHeader(token: string | null): Record<string, string> {
   return token ? { 'Authorization': `Bearer ${token}` } : {};
 }
 
-export async function listRecipes(name?: string, ingredient?: string): Promise<Recipe[]> {
+export async function listRecipes(token: string | null, name?: string, ingredient?: string): Promise<Recipe[]> {
   const params = new URLSearchParams();
   if (name) params.set('name', name);
   if (ingredient) params.set('ingredient', ingredient);
-  const res = await fetch(`${apiPrefix}/recipes?${params}`);
+  const res = await fetch(`${apiPrefix}/recipes?${params}`, {
+    headers: { ...authHeader(token) },
+  });
   if (!res.ok) throw new Error('Failed to list recipes');
   return res.json();
 }

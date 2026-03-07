@@ -2,9 +2,11 @@ import { useEffect, useRef, useState } from 'react';
 import { Container, Row, Col, Card, CardBody, CardTitle, CardText, Input, InputGroup, Button, Badge } from 'reactstrap';
 import { Link } from 'react-router-dom';
 import { listRecipes, Recipe } from '../api/recipes';
+import { useAuth } from '../context/useAuth';
 
 
 export default function RecipeFeed() {
+  const { token } = useAuth();
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [nameFilter, setNameFilter] = useState('');
   const [ingredientFilter, setIngredientFilter] = useState('');
@@ -20,7 +22,7 @@ export default function RecipeFeed() {
     setLoading(true);
     setError(null);
     try {
-      const data = await listRecipes(nameFilter || undefined, ingredientFilter || undefined);
+      const data = await listRecipes(token, nameFilter || undefined, ingredientFilter || undefined);
       setRecipes(data);
     } catch {
       setError('Failed to load recipes');
@@ -31,11 +33,11 @@ export default function RecipeFeed() {
 
   useEffect(() => {
     setLoading(true);
-    listRecipes(undefined, undefined)
+    listRecipes(token, undefined, undefined)
       .then(data => setRecipes(data))
       .catch(() => setError('Failed to load recipes'))
       .finally(() => setLoading(false));
-  }, []);
+  }, [token]);
 
   return (
     <Container className="py-4">
@@ -72,9 +74,9 @@ export default function RecipeFeed() {
       {loading && <p className="text-muted">Loading recipes...</p>}
       {error && <p className="text-danger">{error}</p>}
 
-      <Row className="g-3">
+      <Row className="gx-3 gy-4">
         {recipes.map(recipe => (
-          <Col key={recipe.rid} md={6} lg={4}>
+          <Col key={recipe.rid} md={6} lg={4} style={{paddingTop:'1em'}}>
             <Card className="recipe-card h-100">
               <CardBody>
                 <CardTitle tag="h5">
