@@ -102,13 +102,17 @@ body:not(.dark-theme) {
   }
 }
 
-// Dark mode
+// Dark mode — ink-parchment: manuscript, aged, literary
 body.dark-theme {
-  --bg-color: var(--color-deep);
-  --card-bg: #14100a;
+  --color-teal:  #B8924A;
+  --color-blue:  #D4A857;
+  --color-ember: #8B4513;
+
+  --bg-color: #0D0B0A;
+  --card-bg: #1A1510;
   --card-accent: var(--color-teal);
-  --text-color: #FFEAAE;
-  --border-color: rgba(255, 194, 0, 0.2);
+  --text-color: #E8D5A3;
+  --border-color: rgba(180, 140, 60, 0.25);
   --primary: var(--color-teal);
   --secondary: var(--color-blue);
 
@@ -116,7 +120,7 @@ body.dark-theme {
   color: var(--text-color);
 
   .navbar {
-    background-color: var(--color-deep) !important;
+    background-color: #0D0B0A !important;
   }
 
   .recipe-card {
@@ -127,20 +131,20 @@ body.dark-theme {
   }
 
   .ingredient-chip {
-    background-color: rgba(255, 193, 0, 0.12);
+    background-color: rgba(184, 146, 74, 0.12);
     color: var(--color-blue);
-    border: 1px solid rgba(255, 193, 0, 0.3);
+    border: 1px solid rgba(184, 146, 74, 0.3);
   }
 
   .ingredient-chip-0 {
-    background-color: rgba(255, 130, 0, 0.32);
-    color: #ffd4a0;
-    border-color: rgba(255, 130, 0, 0.70);
+    background-color: rgba(139, 69, 19, 0.35);
+    color: #e8c88a;
+    border-color: rgba(139, 69, 19, 0.65);
   }
   .ingredient-chip-1 {
-    background-color: rgba(255, 193, 0, 0.28);
-    color: #ffe89a;
-    border-color: rgba(255, 193, 0, 0.65);
+    background-color: rgba(212, 168, 87, 0.25);
+    color: #f0dba0;
+    border-color: rgba(212, 168, 87, 0.55);
   }
 
   .card {
@@ -150,20 +154,20 @@ body.dark-theme {
   }
 
   input, textarea, select {
-    background-color: #1e180c;
+    background-color: #231c12;
     color: var(--text-color);
     border-color: var(--border-color);
   }
 
   .form-control {
-    background-color: #1e180c;
+    background-color: #231c12;
     color: var(--text-color);
     border-color: var(--border-color);
     &:focus {
-      background-color: #1e180c;
+      background-color: #231c12;
       color: var(--text-color);
       border-color: var(--color-blue);
-      box-shadow: 0 0 0 0.2rem rgba(255, 193, 0, 0.2);
+      box-shadow: 0 0 0 0.2rem rgba(212, 168, 87, 0.2);
     }
   }
 
@@ -182,7 +186,7 @@ body.dark-theme {
 
   // Reorder row
   .reorder-row {
-    background-color: #1e180c;
+    background-color: #231c12;
     border: 1px solid var(--border-color);
   }
 }
