@@ -186,6 +186,15 @@ export default function RecipeDetail() {
         )}
       </Row>
 
+      {(recipe.calories > 0 || recipe.carbs > 0 || recipe.proteins > 0 || recipe.fats > 0) && (
+        <div className="d-flex flex-wrap gap-2 mb-4">
+          {recipe.calories > 0 && <span className="badge rounded-pill bg-secondary">{recipe.calories} kcal</span>}
+          {recipe.proteins > 0 && <span className="badge rounded-pill bg-secondary">{recipe.proteins}g protein</span>}
+          {recipe.carbs > 0 && <span className="badge rounded-pill bg-secondary">{recipe.carbs}g carbs</span>}
+          {recipe.fats > 0 && <span className="badge rounded-pill bg-secondary">{recipe.fats}g fat</span>}
+        </div>
+      )}
+
       {/* Ingredients */}
       {recipe.ingredients && recipe.ingredients.length > 0 && (
         <section className="mb-4">

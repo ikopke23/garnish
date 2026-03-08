@@ -90,6 +90,14 @@ export default function RecipeFeed() {
                   {recipe.cook_time > 0 && `Cook: ${recipe.cook_time} Minutes`}
                   {recipe.servings > 0 && ` · ${recipe.servings} servings`}
                 </CardText>
+                {(recipe.calories > 0 || recipe.carbs > 0 || recipe.proteins > 0 || recipe.fats > 0) && (
+                  <div className="d-flex flex-wrap gap-1 mb-2">
+                    {recipe.calories > 0 && <span className="badge rounded-pill bg-secondary">{recipe.calories} kcal</span>}
+                    {recipe.proteins > 0 && <span className="badge rounded-pill bg-secondary">{recipe.proteins}g protein</span>}
+                    {recipe.carbs > 0 && <span className="badge rounded-pill bg-secondary">{recipe.carbs}g carbs</span>}
+                    {recipe.fats > 0 && <span className="badge rounded-pill bg-secondary">{recipe.fats}g fat</span>}
+                  </div>
+                )}
                 <div>
                   {(recipe.ingredients || []).slice(0, 4).map(ing => (
                     <span key={ing.iid || ing.name} className="ingredient-chip me-1 mb-1">

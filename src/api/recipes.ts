@@ -40,6 +40,10 @@ export interface Recipe {
   equipment: RecipeEquipment[];
   created_at: string;
   is_public: boolean;
+  calories: number;
+  carbs: number;
+  proteins: number;
+  fats: number;
 }
 
 export interface RecipePayload {
