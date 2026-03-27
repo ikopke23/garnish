@@ -1,4 +1,4 @@
-import { apiPrefix } from '../configuration';
+import { apiFetch } from './client';
 
 export interface CommentWithRecipe {
   cid: string;
@@ -22,13 +22,9 @@ export interface UserStats {
 }
 
 export async function getUserComments(uid: string): Promise<CommentWithRecipe[]> {
-  const res = await fetch(`${apiPrefix}/users/${uid}/comments`);
-  if (!res.ok) throw new Error('Failed to get user comments');
-  return res.json();
+  return apiFetch(`/users/${uid}/comments`);
 }
 
 export async function getUserStats(uid: string): Promise<UserStats> {
-  const res = await fetch(`${apiPrefix}/users/${uid}/stats`);
-  if (!res.ok) throw new Error('Failed to get user stats');
-  return res.json();
+  return apiFetch(`/users/${uid}/stats`);
 }

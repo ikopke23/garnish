@@ -4,6 +4,7 @@ import {
   Container, Form, FormGroup, Label, Input, Button, Row, Col, Alert
 } from 'reactstrap';
 import { createRecipe, updateRecipe, getRecipe, assignStory, RecipeIngredient, RecipeEquipment, RecipeSection, IngredientGroup } from '../api/recipes';
+import { groupIngredientsBySection } from '../utils/ingredients';
 import { listFamilies, Family } from '../api/families';
 import { listStories, Story } from '../api/stories';
 import { useAuth } from '../context/useAuth';
@@ -53,17 +54,7 @@ export default function RecipeForm({ editMode = false }: Props) {
         setSelectedStoryID(r.story_id ?? '');
 
         // Reconstruct ingredient groups from flat array
-        const groups: IngredientGroup[] = [];
-        const seen = new Map<string, IngredientGroup>();
-        for (const ing of (r.ingredients ?? [])) {
-          const key = ing.section ?? '';
-          if (!seen.has(key)) {
-            const g: IngredientGroup = { label: key, ingredients: [] };
-            groups.push(g);
-            seen.set(key, g);
-          }
-          seen.get(key)!.ingredients.push(ing);
-        }
+        const groups = groupIngredientsBySection(r.ingredients ?? []);
         setIngredientGroups(groups.length ? groups : [{ label: '', ingredients: [{ name: '', quantity: 0, unit: '' }] }]);
       }).catch(() => setError('Failed to load recipe'));
     }

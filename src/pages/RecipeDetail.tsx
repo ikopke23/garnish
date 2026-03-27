@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Container, Button, Badge, Row, Col, Spinner } from 'reactstrap';
 import { getRecipe, deleteRecipe, Recipe } from '../api/recipes';
+import { groupIngredientsBySection } from '../utils/ingredients';
 import { getStory, Story } from '../api/stories';
 import { useAuth } from '../context/useAuth';
 import { RecipePhoto, listPhotos, uploadPhoto } from '../api/photos';
@@ -184,34 +185,46 @@ export default function RecipeDetail() {
             </div>
           </Col>
         )}
+        {recipe.calories > 0 && (
+          <Col xs="auto">
+            <div className="text-center">
+              <div className="text-teal fw-bold">{recipe.calories}</div>
+              <div className="text-muted small">kcal</div>
+            </div>
+          </Col>
+        )}
+        {recipe.proteins > 0 && (
+          <Col xs="auto">
+            <div className="text-center">
+              <div className="text-teal fw-bold">{recipe.proteins}g</div>
+              <div className="text-muted small">Protein</div>
+            </div>
+          </Col>
+        )}
+        {recipe.carbs > 0 && (
+          <Col xs="auto">
+            <div className="text-center">
+              <div className="text-teal fw-bold">{recipe.carbs}g</div>
+              <div className="text-muted small">Carbs</div>
+            </div>
+          </Col>
+        )}
+        {recipe.fats > 0 && (
+          <Col xs="auto">
+            <div className="text-center">
+              <div className="text-teal fw-bold">{recipe.fats}g</div>
+              <div className="text-muted small">Fat</div>
+            </div>
+          </Col>
+        )}
       </Row>
-
-      {(recipe.calories > 0 || recipe.carbs > 0 || recipe.proteins > 0 || recipe.fats > 0) && (
-        <div className="d-flex flex-wrap gap-2 mb-4">
-          {recipe.calories > 0 && <span className="badge rounded-pill bg-secondary">{recipe.calories} kcal</span>}
-          {recipe.proteins > 0 && <span className="badge rounded-pill bg-secondary">{recipe.proteins}g protein</span>}
-          {recipe.carbs > 0 && <span className="badge rounded-pill bg-secondary">{recipe.carbs}g carbs</span>}
-          {recipe.fats > 0 && <span className="badge rounded-pill bg-secondary">{recipe.fats}g fat</span>}
-        </div>
-      )}
 
       {/* Ingredients */}
       {recipe.ingredients && recipe.ingredients.length > 0 && (
         <section className="mb-4">
           <h4>Ingredients</h4>
           {(() => {
-            // Group ingredients by section, preserving order
-            const groups: { label: string; ings: typeof recipe.ingredients }[] = [];
-            const seen = new Map<string, typeof groups[0]>();
-            for (const ing of recipe.ingredients) {
-              const key = ing.section ?? '';
-              if (!seen.has(key)) {
-                const g = { label: key, ings: [] as typeof recipe.ingredients };
-                groups.push(g);
-                seen.set(key, g);
-              }
-              seen.get(key)!.ings.push(ing);
-            }
+            const groups = groupIngredientsBySection(recipe.ingredients);
             let globalIdx = 0;
             return groups.map((group, gi) => (
               <div key={gi} className="mb-3">
@@ -219,7 +232,7 @@ export default function RecipeDetail() {
                   <div className="ing-section-header mb-2">{group.label}</div>
                 )}
                 <div className="d-flex flex-column gap-2 ps-2">
-                  {group.ings.map(ing => {
+                  {group.ingredients.map(ing => {
                     const key = ing.iid || ing.name;
                     const done = checkedIngredients.has(key);
                     const chipIdx = globalIdx++ % 2;

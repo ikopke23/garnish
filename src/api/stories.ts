@@ -1,4 +1,4 @@
-import { apiPrefix } from '../configuration';
+import { apiFetch } from './client';
 
 export interface Story {
   sid: string;
@@ -9,25 +9,17 @@ export interface Story {
 }
 
 export async function getStory(sid: string): Promise<Story> {
-  const res = await fetch(`${apiPrefix}/stories/${sid}`);
-  if (!res.ok) throw new Error('Story not found');
-  return res.json();
+  return apiFetch(`/stories/${sid}`);
 }
 
 export async function createStory(token: string, name: string, body: string): Promise<Story> {
-  const res = await fetch(`${apiPrefix}/stories`, {
+  return apiFetch('/stories', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ name, body }),
-  });
-  if (!res.ok) throw new Error('Failed to create story');
-  return res.json();
+  }, token);
 }
 
 export async function listStories(token: string): Promise<Story[]> {
-  const res = await fetch(`${apiPrefix}/stories`, {
-    headers: { 'Authorization': `Bearer ${token}` },
-  });
-  if (!res.ok) throw new Error('Failed to list stories');
-  return res.json();
+  return apiFetch('/stories', {}, token);
 }

@@ -1,4 +1,4 @@
-import { apiPrefix } from '../configuration';
+import { apiFetch, apiFetchVoid } from './client';
 
 export interface Comment {
   cid: string;
@@ -19,41 +19,34 @@ export interface CommentsPage {
 }
 
 export async function listComments(rid: string, page = 1): Promise<CommentsPage> {
-  const res = await fetch(`${apiPrefix}/recipes/${rid}/comments?page=${page}`);
-  if (!res.ok) throw new Error('Failed to list comments');
-  return res.json();
+  return apiFetch(`/recipes/${rid}/comments?page=${page}`);
 }
 
 export async function createComment(token: string, rid: string, body: string, parentCid?: string): Promise<Comment> {
-  const res = await fetch(`${apiPrefix}/recipes/${rid}/comments`, {
+  return apiFetch(`/recipes/${rid}/comments`, {
     method: 'POST',
-    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ body, parent_cid: parentCid ?? null }),
-  });
-  if (!res.ok) throw new Error('Failed to create comment');
-  return res.json();
+  }, token);
 }
 
 export async function deleteComment(token: string, cid: string): Promise<void> {
-  const res = await fetch(`${apiPrefix}/comments/${cid}`, {
-    method: 'DELETE',
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  if (!res.ok) throw new Error('Failed to delete comment');
+  return apiFetchVoid(`/comments/${cid}`, { method: 'DELETE' }, token);
 }
 
 export async function hideComment(token: string, cid: string, hidden: boolean): Promise<void> {
-  const res = await fetch(`${apiPrefix}/comments/${cid}/hidden`, {
+  return apiFetchVoid(`/comments/${cid}/hidden`, {
     method: 'PATCH',
-    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ hidden }),
-  });
-  if (!res.ok) throw new Error('Failed to update comment');
+  }, token);
 }
 
 export async function countComments(rid: string): Promise<number> {
-  const res = await fetch(`${apiPrefix}/recipes/${rid}/comments/count`);
-  if (!res.ok) return 0;
-  const data = await res.json();
-  return data.total ?? 0;
+  try {
+    const data = await apiFetch<{ total: number }>(`/recipes/${rid}/comments/count`);
+    return data.total ?? 0;
+  } catch {
+    return 0;
+  }
 }

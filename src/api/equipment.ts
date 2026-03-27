@@ -1,4 +1,4 @@
-import { apiPrefix } from '../configuration';
+import { apiFetch } from './client';
 
 export interface Equipment {
   eid: string;
@@ -6,7 +6,5 @@ export interface Equipment {
 }
 
 export async function listEquipment(): Promise<Equipment[]> {
-  const res = await fetch(`${apiPrefix}/equipment`);
-  if (!res.ok) throw new Error('Failed to list equipment');
-  return res.json();
+  return apiFetch('/equipment');
 }

@@ -1,4 +1,4 @@
-import { apiPrefix } from '../configuration';
+import { apiFetch } from './client';
 
 export interface Ingredient {
   iid: string;
@@ -6,7 +6,5 @@ export interface Ingredient {
 }
 
 export async function listIngredients(): Promise<Ingredient[]> {
-  const res = await fetch(`${apiPrefix}/ingredients`);
-  if (!res.ok) throw new Error('Failed to list ingredients');
-  return res.json();
+  return apiFetch('/ingredients');
 }

@@ -1,8 +1,9 @@
 import { useState, FormEvent } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Container, Card, CardBody, Form, FormGroup, Label, Input, Button, Alert } from 'reactstrap';
+import { FormGroup, Label, Input, Button } from 'reactstrap';
 import { login } from '../api/auth';
 import { useAuth } from '../context/useAuth';
+import AuthForm from '../components/AuthForm';
 
 export default function Login() {
   const [username, setUsername] = useState('');
@@ -28,36 +29,34 @@ export default function Login() {
   };
 
   return (
-    <Container className="py-5" style={{ maxWidth: '420px' }}>
-      <Card>
-        <CardBody>
-          <h3 className="mb-4 text-center" style={{ color: 'var(--color-teal)' }}>Welcome back</h3>
-          {error && <Alert color="danger">{error}</Alert>}
-          <Form onSubmit={handleSubmit}>
-            <FormGroup>
-              <Label>Username</Label>
-              <Input value={username} onChange={e => setUsername(e.target.value)} required autoFocus />
-            </FormGroup>
-            <FormGroup>
-              <Label>Password</Label>
-              <Input type="password" value={password} onChange={e => setPassword(e.target.value)} required />
-            </FormGroup>
-            <Button color="primary" type="submit" className="w-100" disabled={loading}>
-              {loading ? 'Logging in...' : 'Login'}
-            </Button>
-          </Form>
-          <Button
-            disabled
-            className="w-100 mt-2"
-            style={{ backgroundColor: '#B0197E', borderColor: '#B0197E', color: '#fff', opacity: 1 }}
-          >
-            Login with CSH SSO
-          </Button>
-          <p className="text-center mt-3 text-muted small">
-            No account? <Link to="/register">Register</Link>
-          </p>
-        </CardBody>
-      </Card>
-    </Container>
+    <AuthForm
+      title="Welcome back"
+      onSubmit={handleSubmit}
+      error={error}
+      loading={loading}
+      submitLabel="Login"
+      fields={<>
+        <FormGroup>
+          <Label>Username</Label>
+          <Input value={username} onChange={e => setUsername(e.target.value)} required autoFocus />
+        </FormGroup>
+        <FormGroup>
+          <Label>Password</Label>
+          <Input type="password" value={password} onChange={e => setPassword(e.target.value)} required />
+        </FormGroup>
+      </>}
+      footer={<>
+        <Button
+          disabled
+          className="w-100 mt-2"
+          style={{ backgroundColor: '#B0197E', borderColor: '#B0197E', color: '#fff', opacity: 1 }}
+        >
+          Login with CSH SSO
+        </Button>
+        <p className="text-center mt-3 text-muted small">
+          No account? <Link to="/register">Register</Link>
+        </p>
+      </>}
+    />
   );
 }

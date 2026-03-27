@@ -1,3 +1,4 @@
+import { apiFetch } from './client';
 import { apiPrefix } from '../configuration';
 
 export interface RecipePhoto {
@@ -9,20 +10,16 @@ export interface RecipePhoto {
 }
 
 export async function listPhotos(rid: string): Promise<RecipePhoto[]> {
-  const res = await fetch(`${apiPrefix}/recipes/${rid}/photos`);
-  if (!res.ok) throw new Error('Failed to list photos');
-  return (await res.json() as RecipePhoto[]).map(p => ({ ...p, link: apiPrefix + p.link }));
+  const photos = await apiFetch<RecipePhoto[]>(`/recipes/${rid}/photos`);
+  return photos.map(p => ({ ...p, link: apiPrefix + p.link }));
 }
 
 export async function uploadPhoto(token: string, rid: string, file: File): Promise<RecipePhoto> {
   const form = new FormData();
   form.append('photo', file);
-  const res = await fetch(`${apiPrefix}/recipes/${rid}/photos`, {
+  const photo = await apiFetch<RecipePhoto>(`/recipes/${rid}/photos`, {
     method: 'POST',
-    headers: { Authorization: `Bearer ${token}` },
     body: form,
-  });
-  if (!res.ok) throw new Error('Failed to upload photo');
-  const photo = await res.json() as RecipePhoto;
+  }, token);
   return { ...photo, link: apiPrefix + photo.link };
 }
