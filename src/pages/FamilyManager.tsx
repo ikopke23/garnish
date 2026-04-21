@@ -1,7 +1,8 @@
 import { useEffect, useState, FormEvent } from 'react';
-import {
-  Container, Card, CardBody, Button, Input, Form, FormGroup, Alert, Spinner, Row, Col
-} from 'reactstrap';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent } from '@/components/ui/card';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuth } from '../context/useAuth';
 import { listFamilies, createFamily, addMember, Family } from '../api/families';
 
@@ -43,55 +44,62 @@ export default function FamilyManager() {
     }
   };
 
-  if (loading) return <Container className="py-4"><Spinner /></Container>;
+  if (loading) return <div className="py-8 px-4">Loading...</div>;
 
   return (
-    <Container className="py-4" style={{ maxWidth: '700px' }}>
-      <h2 className="mb-4" style={{ color: 'var(--color-teal)' }}>Family Manager</h2>
+    <div className="max-w-[700px] mx-auto py-8 px-4">
+      <h2 className="mb-4" style={{ color: 'var(--primary-hex)' }}>Family Manager</h2>
 
-      {error && <Alert color="danger" toggle={() => setError(null)}>{error}</Alert>}
+      {error && (
+        <Alert variant="destructive" className="mb-4">
+          <AlertDescription>
+            {error}{' '}
+            <button onClick={() => setError(null)} className="ml-2 underline text-xs">
+              Dismiss
+            </button>
+          </AlertDescription>
+        </Alert>
+      )}
 
       <Card className="mb-4">
-        <CardBody>
+        <CardContent className="p-6">
           <h5>Create a Family</h5>
-          <Form onSubmit={handleCreateFamily}>
-            <FormGroup className="d-flex gap-2">
+          <form onSubmit={handleCreateFamily}>
+            <div className="flex gap-2">
               <Input
                 placeholder="Family name"
                 value={newFamilyName}
                 onChange={e => setNewFamilyName(e.target.value)}
               />
-              <Button color="primary" type="submit">Create</Button>
-            </FormGroup>
-          </Form>
-        </CardBody>
+              <Button type="submit">Create</Button>
+            </div>
+          </form>
+        </CardContent>
       </Card>
 
       {families.length === 0 ? (
-        <p className="text-muted">No families yet. Create one above!</p>
+        <p className="text-muted-foreground">No families yet. Create one above!</p>
       ) : (
         families.map(family => (
           <Card key={family.fid} className="mb-3">
-            <CardBody>
+            <CardContent className="p-6">
               <h5>{family.name}</h5>
-              <Row className="mt-2 g-2 align-items-center">
-                <Col>
-                  <Input
-                    placeholder="Member username to add"
-                    value={newMemberUsername[family.fid] || ''}
-                    onChange={e => setNewMemberUsername({ ...newMemberUsername, [family.fid]: e.target.value })}
-                  />
-                </Col>
-                <Col xs="auto">
-                  <Button color="secondary" size="sm" onClick={() => handleAddMember(family.fid)}>
-                    Add Member
-                  </Button>
-                </Col>
-              </Row>
-            </CardBody>
+              <div className="flex gap-2 mt-2 items-center">
+                <Input
+                  placeholder="Member username to add"
+                  value={newMemberUsername[family.fid] || ''}
+                  onChange={e =>
+                    setNewMemberUsername({ ...newMemberUsername, [family.fid]: e.target.value })
+                  }
+                />
+                <Button variant="secondary" size="sm" onClick={() => handleAddMember(family.fid)}>
+                  Add Member
+                </Button>
+              </div>
+            </CardContent>
           </Card>
         ))
       )}
-    </Container>
+    </div>
   );
 }

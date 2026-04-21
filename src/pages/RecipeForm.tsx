@@ -1,14 +1,18 @@
 import { useState, useEffect, FormEvent } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import {
-  Container, Form, FormGroup, Label, Input, Button, Row, Col, Alert
-} from 'reactstrap';
 import { createRecipe, updateRecipe, getRecipe, assignStory, RecipeIngredient, RecipeEquipment, RecipeSection, IngredientGroup } from '../api/recipes';
 import { groupIngredientsBySection } from '../utils/ingredients';
 import { listFamilies, Family } from '../api/families';
 import { listStories, Story } from '../api/stories';
 import { useAuth } from '../context/useAuth';
 import ReorderModal from '../components/ReorderModal';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Label } from '@/components/ui/label';
 
 interface Props {
   editMode?: boolean;
@@ -68,11 +72,10 @@ export default function RecipeForm({ editMode = false }: Props) {
   }, [token]);
 
   useEffect(() => {
-    if (!token) return;
-    listStories(token)
+    listStories()
       .then(setStories)
       .catch(() => {});
-  }, [token]);
+  }, []);
 
   const handleReorderSave = (reordered: RecipeSection[]) => {
     setSections(reordered);
@@ -179,45 +182,43 @@ export default function RecipeForm({ editMode = false }: Props) {
   const showIngReorder = ingredientGroups.length > 1 || ingredientGroups.some(g => g.ingredients.length > 1);
 
   return (
-    <Container className="py-4" style={{ maxWidth: '700px' }}>
-      <h2 className="mb-4" style={{ color: 'var(--color-teal)' }}>
+    <div style={{ maxWidth: 700, margin: '0 auto', padding: '2rem 1rem' }}>
+      <h2 className="mb-4" style={{ color: 'var(--primary-hex)' }}>
         {editMode ? 'Edit Recipe' : 'Create Recipe'}
       </h2>
 
-      {error && <Alert color="danger">{error}</Alert>}
+      {error && (
+        <Alert variant="destructive" className="mb-4">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
 
-      <Form onSubmit={handleSubmit}>
-        <FormGroup>
+      <form onSubmit={handleSubmit}>
+        <div className="space-y-2 mb-4">
           <Label>Recipe Name *</Label>
           <Input value={name} onChange={e => setName(e.target.value)} required placeholder="e.g. Grandma's Apple Pie" />
-        </FormGroup>
+        </div>
 
-        <Row>
-          <Col md={4}>
-            <FormGroup>
-              <Label>Prep Time (min)</Label>
-              <Input type="number" min={0} value={prepTime} onChange={e => setPrepTime(+e.target.value)} />
-            </FormGroup>
-          </Col>
-          <Col md={4}>
-            <FormGroup>
-              <Label>Cook Time (min)</Label>
-              <Input type="number" min={0} value={cookTime} onChange={e => setCookTime(+e.target.value)} />
-            </FormGroup>
-          </Col>
-          <Col md={4}>
-            <FormGroup>
-              <Label>Servings</Label>
-              <Input type="number" min={1} value={servings} onChange={e => setServings(+e.target.value)} />
-            </FormGroup>
-          </Col>
-        </Row>
+        <div className="grid md:grid-cols-3 grid-cols-1 gap-4">
+          <div className="space-y-2 mb-4">
+            <Label>Prep Time (min)</Label>
+            <Input type="number" min={0} value={prepTime} onChange={e => setPrepTime(+e.target.value)} />
+          </div>
+          <div className="space-y-2 mb-4">
+            <Label>Cook Time (min)</Label>
+            <Input type="number" min={0} value={cookTime} onChange={e => setCookTime(+e.target.value)} />
+          </div>
+          <div className="space-y-2 mb-4">
+            <Label>Servings</Label>
+            <Input type="number" min={1} value={servings} onChange={e => setServings(+e.target.value)} />
+          </div>
+        </div>
 
         {/* Ingredients */}
         <h5 className="mt-3">Ingredients</h5>
         {ingredientGroups.map((group, gi) => (
           <div key={gi} className="recipe-section border rounded p-3 mb-3">
-            <div className="d-flex align-items-center gap-2 mb-2">
+            <div className="flex items-center gap-2 mb-2">
               <Input
                 placeholder="Section (e.g. For the sauce) — optional"
                 value={group.label}
@@ -225,36 +226,46 @@ export default function RecipeForm({ editMode = false }: Props) {
                 style={{ fontWeight: group.label ? 600 : undefined }}
               />
               <Button
-                color="danger" size="sm" outline
+                size="sm"
+                variant="outline"
+                style={{ borderColor: 'var(--accent-hex)', color: 'var(--accent-hex)' }}
                 onClick={() => removeIngGroup(gi)}
                 disabled={ingredientGroups.length === 1}
+                type="button"
               >&#x2715;</Button>
             </div>
             {group.ingredients.map((ing, ii) => (
-              <Row key={ii} className="mb-2 g-2 align-items-center">
-                <Col md={5}>
+              <div key={ii} className="flex gap-2 items-center mb-2">
+                <div className="flex-[5]">
                   <Input placeholder="Ingredient name" value={ing.name} onChange={e => updateIngredient(gi, ii, 'name', e.target.value)} />
-                </Col>
-                <Col md={2}>
+                </div>
+                <div className="flex-[2]">
                   <Input type="number" placeholder="Qty" min={0} step="0.25" value={ing.quantity || ''} onChange={e => updateIngredient(gi, ii, 'quantity', +e.target.value)} />
-                </Col>
-                <Col md={3}>
+                </div>
+                <div className="flex-[3]">
                   <Input placeholder="Unit (cups, g...)" value={ing.unit} onChange={e => updateIngredient(gi, ii, 'unit', e.target.value)} />
-                </Col>
-                <Col md={2}>
-                  <Button color="danger" size="sm" outline onClick={() => removeIngredient(gi, ii)} disabled={group.ingredients.length === 1 && ingredientGroups.length === 1}>&#x2715;</Button>
-                </Col>
-              </Row>
+                </div>
+                <div className="flex-[2]">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    style={{ borderColor: 'var(--accent-hex)', color: 'var(--accent-hex)' }}
+                    onClick={() => removeIngredient(gi, ii)}
+                    disabled={group.ingredients.length === 1 && ingredientGroups.length === 1}
+                    type="button"
+                  >&#x2715;</Button>
+                </div>
+              </div>
             ))}
-            <Button color="primary" size="sm" outline onClick={() => addIngredient(gi)}>+ Add Ingredient</Button>
+            <Button size="sm" variant="outline" onClick={() => addIngredient(gi)} type="button">+ Add Ingredient</Button>
           </div>
         ))}
-        <div className="d-flex gap-2 mb-3">
-          <Button color="primary" size="sm" outline onClick={addIngGroup}>
+        <div className="flex gap-2 mb-3">
+          <Button size="sm" variant="outline" onClick={addIngGroup} type="button">
             + Add Section
           </Button>
           {showIngReorder && (
-            <Button size="sm" outline color="secondary" onClick={() => setReorderIngsOpen(true)}>
+            <Button size="sm" variant="outline" onClick={() => setReorderIngsOpen(true)} type="button">
               ⠿ Reorder Ingredients
             </Button>
           )}
@@ -263,16 +274,23 @@ export default function RecipeForm({ editMode = false }: Props) {
         {/* Equipment */}
         <h5 className="mt-3">Equipment</h5>
         {equipmentList.map((eq, i) => (
-          <Row key={i} className="mb-2 g-2 align-items-center">
-            <Col md={10}>
+          <div key={i} className="flex gap-2 items-center mb-2">
+            <div className="flex-[10]">
               <Input placeholder="Equipment name" value={eq.name} onChange={e => updateEquipment(i, e.target.value)} />
-            </Col>
-            <Col md={2}>
-              <Button color="danger" size="sm" outline onClick={() => removeEquipment(i)} disabled={equipmentList.length === 1}>&#x2715;</Button>
-            </Col>
-          </Row>
+            </div>
+            <div className="flex-[2]">
+              <Button
+                size="sm"
+                variant="outline"
+                style={{ borderColor: 'var(--accent-hex)', color: 'var(--accent-hex)' }}
+                onClick={() => removeEquipment(i)}
+                disabled={equipmentList.length === 1}
+                type="button"
+              >&#x2715;</Button>
+            </div>
+          </div>
         ))}
-        <Button color="primary" size="sm" outline onClick={addEquipment} className="mb-3">+ Add Equipment</Button>
+        <Button size="sm" variant="outline" onClick={addEquipment} className="mb-3" type="button">+ Add Equipment</Button>
 
         {/* Steps */}
         <h5 className="mt-3">Steps</h5>
@@ -280,8 +298,8 @@ export default function RecipeForm({ editMode = false }: Props) {
           const isCollapsed = collapsedSections.has(si);
           return (
             <div key={si} className="recipe-section border rounded p-3 mb-3">
-              <div className="d-flex align-items-center gap-2 mb-2">
-                <Button color="secondary" size="sm" outline onClick={() => toggleSectionCollapse(si)}>
+              <div className="flex items-center gap-2 mb-2">
+                <Button size="sm" variant="outline" onClick={() => toggleSectionCollapse(si)} type="button">
                   {isCollapsed ? '▶' : '▼'}
                 </Button>
                 <Input
@@ -290,36 +308,46 @@ export default function RecipeForm({ editMode = false }: Props) {
                   onChange={e => updateSectionTitle(si, e.target.value)}
                   style={{ fontWeight: 600 }}
                 />
-                <Button color="danger" size="sm" outline onClick={() => removeSection(si)}
-                        disabled={sections.length === 1}>&#x2715;</Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  style={{ borderColor: 'var(--accent-hex)', color: 'var(--accent-hex)' }}
+                  onClick={() => removeSection(si)}
+                  disabled={sections.length === 1}
+                  type="button"
+                >&#x2715;</Button>
               </div>
               {!isCollapsed && (
                 <>
                   {section.steps.map((step, i) => (
-                    <Row key={i} className="mb-2 g-2 align-items-start">
-                      <Col xs={1} className="text-muted pt-2 text-end">{i + 1}.</Col>
-                      <Col xs={9}>
-                        <Input type="textarea" rows={2} placeholder={`Step ${i + 1}`}
+                    <div key={i} className="flex gap-2 items-start mb-2">
+                      <span className="pt-2" style={{ color: 'var(--muted-hex)', minWidth: '1.5rem', textAlign: 'right' }}>{i + 1}.</span>
+                      <div className="flex-1">
+                        <Textarea rows={2} placeholder={`Step ${i + 1}`}
                                value={step} onChange={e => updateStep(si, i, e.target.value)} />
-                      </Col>
-                      <Col xs={2}>
-                        <Button color="danger" size="sm" outline onClick={() => removeStep(si, i)}
-                                disabled={section.steps.length === 1}>&#x2715;</Button>
-                      </Col>
-                    </Row>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        style={{ borderColor: 'var(--accent-hex)', color: 'var(--accent-hex)' }}
+                        onClick={() => removeStep(si, i)}
+                        disabled={section.steps.length === 1}
+                        type="button"
+                      >&#x2715;</Button>
+                    </div>
                   ))}
-                  <Button color="secondary" size="sm" outline onClick={() => addStep(si)}>+ Add Step</Button>
+                  <Button size="sm" variant="outline" onClick={() => addStep(si)} type="button">+ Add Step</Button>
                 </>
               )}
             </div>
           );
         })}
-        <div className="d-flex gap-2 mb-4">
-          <Button color="primary" size="sm" outline onClick={addSection}>
+        <div className="flex gap-2 mb-4">
+          <Button size="sm" variant="outline" onClick={addSection} type="button">
             + Add Section
           </Button>
           {sections.length > 1 && (
-            <Button color="secondary" size="sm" outline onClick={() => setReorderOpen(true)}>
+            <Button size="sm" variant="outline" onClick={() => setReorderOpen(true)} type="button">
               ⠿ Reorder Sections
             </Button>
           )}
@@ -342,10 +370,10 @@ export default function RecipeForm({ editMode = false }: Props) {
         />
 
         {/* Family visibility */}
-        <FormGroup>
+        <div className="space-y-2 mb-4">
           <Label>Visibility</Label>
 
-          <div className="sharing-cards mb-3">
+          <div className="mb-3 flex flex-col gap-2">
             <label className={`sharing-card${isPublic ? ' active' : ''}`}>
               <input type="checkbox" checked={isPublic} onChange={e => setIsPublic(e.target.checked)} />
               <span>Public</span>
@@ -358,45 +386,37 @@ export default function RecipeForm({ editMode = false }: Props) {
             ))}
           </div>
 
-          <small className="text-muted">
+          <small style={{ color: 'var(--muted-hex)' }}>
             Uncheck Public to limit visibility to selected families only.
           </small>
-        </FormGroup>
+        </div>
 
         {/* Story */}
-        <FormGroup className="mt-3">
-          <div className="d-flex align-items-center gap-2 mb-2">
-            <Input
-              type="switch"
-              id="includeStory"
-              checked={includeStory}
-              onChange={e => setIncludeStory(e.target.checked)}
-            />
-            <Label for="includeStory" className="mb-0">Include story</Label>
+        <div className="space-y-2 mb-4 mt-3">
+          <div className="flex items-center gap-3 mb-2">
+            <Switch id="includeStory" checked={includeStory} onCheckedChange={setIncludeStory} />
+            <Label htmlFor="includeStory">Include story</Label>
           </div>
           {includeStory && (
-            <Input
-              type="select"
-              value={selectedStoryID}
-              onChange={e => setSelectedStoryID(e.target.value)}
-            >
-              <option value="">— no story selected —</option>
-              {stories.map(s => (
-                <option key={s.sid} value={s.sid}>
-                  {s.name} — {s.author_name}
-                </option>
-              ))}
-            </Input>
+            <Select value={selectedStoryID} onValueChange={setSelectedStoryID}>
+              <SelectTrigger><SelectValue placeholder="— no story selected —" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">— no story selected —</SelectItem>
+                {stories.map(s => (
+                  <SelectItem key={s.sid} value={s.sid}>{s.name} — {s.author_name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           )}
-        </FormGroup>
+        </div>
 
-        <div className="d-flex gap-2">
-          <Button color="primary" type="submit" disabled={loading}>
+        <div className="flex gap-2">
+          <Button type="submit" disabled={loading}>
             {loading ? 'Saving...' : editMode ? 'Update Recipe' : 'Create Recipe'}
           </Button>
-          <Button color="link" onClick={() => navigate(-1)}>Cancel</Button>
+          <Button variant="link" type="button" onClick={() => navigate(-1)}>Cancel</Button>
         </div>
-      </Form>
-    </Container>
+      </form>
+    </div>
   );
 }

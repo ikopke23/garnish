@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, memo } from 'react';
-import { Button } from 'reactstrap';
+import { Button } from '@/components/ui/button';
 import { listComments, createComment, deleteComment, hideComment, countComments, Comment } from '../api/comments';
 
 // Small form that appears inline when replying to a sub-comment
@@ -22,27 +22,27 @@ function ReplyToSubForm({ targetCid, onReply }: { targetCid: string; onReply: (t
 
   if (!open) {
     return (
-      <Button size="sm" color="outline-secondary" onClick={() => setOpen(true)}>
+      <Button size="sm" variant="outline" onClick={() => setOpen(true)}>
         Reply
       </Button>
     );
   }
 
   return (
-    <div className="d-flex gap-2">
+    <div className="flex gap-2">
       <input
         type="text"
-        className="form-control form-control-sm"
+        className="flex h-7 w-full rounded border border-input bg-background px-2 py-0.5 text-xs outline-none focus:border-primary"
         value={body}
         onChange={e => setBody(e.target.value)}
         placeholder="Write a reply..."
         onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handlePost(); } }}
         autoFocus
       />
-      <Button size="sm" color="primary" onClick={handlePost} disabled={posting || !body.trim()}>
+      <Button size="sm" variant="default" onClick={handlePost} disabled={posting || !body.trim()}>
         Post
       </Button>
-      <Button size="sm" color="secondary" onClick={() => setOpen(false)}>
+      <Button size="sm" variant="secondary" onClick={() => setOpen(false)}>
         Cancel
       </Button>
     </div>
@@ -84,24 +84,24 @@ const CommentItem = memo(function CommentItem({
 
   return (
     <div style={{ marginBottom: '1.5rem' }}>
-      <div className="d-flex justify-content-between align-items-start">
+      <div className="flex justify-between items-start">
         <div>
           <strong>{comment.author_username}</strong>
-          <span className="text-muted small ms-2">· {new Date(comment.created_at).toLocaleDateString()}</span>
+          <span className="text-muted-foreground text-sm ml-2">· {new Date(comment.created_at).toLocaleDateString()}</span>
         </div>
-        <div className="d-flex gap-2">
+        <div className="flex gap-2">
           {currentUid && token && (
-            <Button size="sm" color="outline-secondary" onClick={() => setShowReplyForm(v => !v)}>
+            <Button size="sm" variant="outline" onClick={() => setShowReplyForm(v => !v)}>
               Reply
             </Button>
           )}
           {isAuthor && (
-            <Button size="sm" color="outline-danger" onClick={() => onDelete(comment.cid)}>
+            <Button size="sm" variant="outline" className="text-destructive" onClick={() => onDelete(comment.cid)}>
               Delete
             </Button>
           )}
           {isRecipeOwner && !isAuthor && (
-            <Button size="sm" color="outline-warning" onClick={() => onHide(comment.cid, !comment.hidden)}>
+            <Button size="sm" variant="outline" onClick={() => onHide(comment.cid, !comment.hidden)}>
               {comment.hidden ? 'Unhide' : 'Hide'}
             </Button>
           )}
@@ -110,22 +110,22 @@ const CommentItem = memo(function CommentItem({
       <p className="mb-1 mt-1">{comment.body}</p>
 
       {comment.replies && comment.replies.length > 0 && (
-        <div style={{ marginLeft: '1.5rem', borderLeft: '2px solid var(--border-color)', paddingLeft: '0.75rem', marginTop: '0.5rem' }}>
+        <div style={{ marginLeft: '1.5rem', borderLeft: '2px solid var(--border-hex)', paddingLeft: '0.75rem', marginTop: '0.5rem' }}>
           {comment.replies.map(reply => {
             const isReplyAuthor = currentUid === reply.author_uid;
             return (
               <div key={reply.cid} style={{ marginBottom: '0.75rem' }}>
-                <div className="d-flex justify-content-between align-items-start">
+                <div className="flex justify-between items-start">
                   <div>
                     <strong>{reply.author_username}</strong>
-                    <span className="text-muted small ms-2">· {new Date(reply.created_at).toLocaleDateString()}</span>
+                    <span className="text-muted-foreground text-sm ml-2">· {new Date(reply.created_at).toLocaleDateString()}</span>
                   </div>
-                  <div className="d-flex gap-2">
+                  <div className="flex gap-2">
                     {currentUid && token && (
                       <ReplyToSubForm targetCid={reply.cid} onReply={onReply} />
                     )}
                     {isReplyAuthor && (
-                      <Button size="sm" color="outline-danger"
+                      <Button size="sm" variant="outline" className="text-destructive"
                         onClick={() => onDeleteReply(comment.cid, reply.cid)}>
                         Delete
                       </Button>
@@ -140,19 +140,19 @@ const CommentItem = memo(function CommentItem({
       )}
 
       {showReplyForm && (
-        <div style={{ marginLeft: '1.5rem', marginTop: '0.5rem' }} className="d-flex gap-2">
+        <div style={{ marginLeft: '1.5rem', marginTop: '0.5rem' }} className="flex gap-2">
           <input
             type="text"
-            className="form-control form-control-sm"
+            className="flex h-7 w-full rounded border border-input bg-background px-2 py-0.5 text-xs outline-none focus:border-primary"
             value={replyBody}
             onChange={e => setReplyBody(e.target.value)}
             placeholder="Write a reply..."
             onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleReply(); } }}
           />
-          <Button size="sm" color="primary" onClick={handleReply} disabled={replying || !replyBody.trim()}>
+          <Button size="sm" variant="default" onClick={handleReply} disabled={replying || !replyBody.trim()}>
             Post
           </Button>
-          <Button size="sm" color="secondary" onClick={() => setShowReplyForm(false)}>
+          <Button size="sm" variant="secondary" onClick={() => setShowReplyForm(false)}>
             Cancel
           </Button>
         </div>
@@ -246,9 +246,9 @@ export default function CommentsSection({ rid, recipeAuthorUid, isAuthenticated,
   return (
     <section className="mt-4 mb-4">
       <Button
-        color="link"
+        variant="link"
         className="p-0 mb-3"
-        style={{ textDecoration: 'none', color: 'var(--color-teal)' }}
+        style={{ textDecoration: 'none', color: 'var(--primary-hex)' }}
         onClick={handleOpen}
       >
         {open ? '▲ Hide Comments' : `▼ View Comments (${total})`}
@@ -257,7 +257,7 @@ export default function CommentsSection({ rid, recipeAuthorUid, isAuthenticated,
       {open && (
         <>
           {loaded && comments.length === 0 && (
-            <p className="text-muted small">No comments yet. Be the first!</p>
+            <p className="text-muted-foreground text-sm">No comments yet. Be the first!</p>
           )}
 
           {comments.map(comment => {
@@ -278,28 +278,28 @@ export default function CommentsSection({ rid, recipeAuthorUid, isAuthenticated,
           })}
 
           {totalPages > 1 && (
-            <div className="d-flex gap-2 mt-2 mb-3">
-              <Button size="sm" color="secondary" disabled={page <= 1} onClick={() => fetchComments(page - 1)}>
+            <div className="flex gap-2 mt-2 mb-3">
+              <Button size="sm" variant="secondary" disabled={page <= 1} onClick={() => fetchComments(page - 1)}>
                 Previous
               </Button>
-              <span className="align-self-center text-muted small">{page} / {totalPages}</span>
-              <Button size="sm" color="secondary" disabled={page >= totalPages} onClick={() => fetchComments(page + 1)}>
+              <span className="self-center text-muted-foreground text-sm">{page} / {totalPages}</span>
+              <Button size="sm" variant="secondary" disabled={page >= totalPages} onClick={() => fetchComments(page + 1)}>
                 Next
               </Button>
             </div>
           )}
 
           {isAuthenticated && (
-            <div className="mt-3 d-flex gap-2">
+            <div className="mt-3 flex gap-2">
               <input
                 type="text"
-                className="form-control"
+                className="flex h-9 w-full rounded border border-input bg-background px-3 py-1 text-sm outline-none focus:border-primary"
                 value={newBody}
                 onChange={e => setNewBody(e.target.value)}
                 placeholder="Write a comment..."
                 onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handlePost(); } }}
               />
-              <Button size="sm" color="primary" onClick={handlePost} disabled={posting || !newBody.trim()}>
+              <Button size="sm" variant="default" onClick={handlePost} disabled={posting || !newBody.trim()}>
                 Post
               </Button>
             </div>

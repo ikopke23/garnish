@@ -3,8 +3,7 @@ import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-d
 import PageContainer from './containers/PageContainer';
 import { AuthProvider } from './context/AuthContext';
 import { useAuth } from './context/useAuth';
-import 'csh-material-bootstrap/dist/csh-material-bootstrap.css';
-import './styles/theme.scss';
+import './index.css';
 
 // Pages
 import RecipeFeed from './pages/RecipeFeed';
@@ -14,6 +13,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import UserProfile from './pages/UserProfile';
 import FamilyManager from './pages/FamilyManager';
+import StoryForm from './pages/StoryForm';
 import NotFound from './pages/NotFound';
 
 function ProtectedRoute({ children }: { children: ReactNode }) {
@@ -42,6 +42,8 @@ function AppRoutes() {
         <Route path="/family" element={
           <ProtectedRoute><FamilyManager /></ProtectedRoute>
         } />
+        <Route path="/stories/new" element={<ProtectedRoute><StoryForm /></ProtectedRoute>} />
+        <Route path="/stories/:sid/edit" element={<ProtectedRoute><StoryForm editMode /></ProtectedRoute>} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </PageContainer>

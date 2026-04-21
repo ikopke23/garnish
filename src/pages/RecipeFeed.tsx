@@ -1,9 +1,101 @@
 import { useEffect, useRef, useState } from 'react';
-import { Container, Row, Col, Card, CardBody, CardTitle, CardText, Input, InputGroup, Button, Badge } from 'reactstrap';
 import { Link } from 'react-router-dom';
+import { Clock, Users, Flame } from 'lucide-react';
 import { listRecipes, Recipe } from '../api/recipes';
 import { useAuth } from '../context/useAuth';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
 
+function IngredientSummary({ ingredients }: { ingredients: Recipe['ingredients'] }) {
+  if (!ingredients || ingredients.length === 0) return null;
+  const shown = ingredients.slice(0, 6).map(i => i.name).join(' · ');
+  const extra = ingredients.length > 6 ? ` +${ingredients.length - 6} more` : '';
+  return (
+    <p
+      className="text-sm text-muted-foreground"
+      style={{
+        display: '-webkit-box',
+        WebkitLineClamp: 2,
+        WebkitBoxOrient: 'vertical',
+        overflow: 'hidden',
+      }}
+    >
+      {shown}{extra}
+    </p>
+  );
+}
+
+function RecipeCard({ recipe }: { recipe: Recipe }) {
+  const totalTime = (recipe.prep_time || 0) + (recipe.cook_time || 0);
+  return (
+    <Link to={`/recipes/${recipe.rid}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+      <div
+        className={cn(
+          'recipe-card rounded-md overflow-hidden border flex md:flex-row flex-col',
+          'transition-transform duration-150 cursor-pointer'
+        )}
+        style={{ background: 'var(--card-bg)', borderColor: 'var(--border-hex)' }}
+      >
+        {/* Image */}
+        <div
+          className="md:w-[200px] flex-shrink-0 overflow-hidden flex items-center justify-center"
+          style={{ minHeight: 0, background: 'var(--muted-hex)' }}
+        >
+          <div className="w-full h-[180px] md:h-full" style={{ minHeight: 160 }}>
+            <div
+              className="w-full h-full flex items-center justify-center text-xs"
+              style={{ color: 'var(--nav-fg)', opacity: 0.4 }}
+            >
+              No photo
+            </div>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 p-4 flex flex-col gap-1">
+          <p
+            className="text-[10.5px] uppercase tracking-[1.5px]"
+            style={{ fontFamily: '"Lora", Georgia, serif', color: 'var(--muted-hex)' }}
+          >
+            @{recipe.author_username ?? recipe.author_uid}
+          </p>
+          <h2
+            className="font-semibold leading-snug md:text-[22px] text-[20px]"
+            style={{
+              fontFamily: '"Cinzel", Georgia, serif',
+              color: 'var(--text)',
+            }}
+          >
+            {recipe.name}
+          </h2>
+          <div
+            className="flex items-center gap-4 text-[12px]"
+            style={{ fontFamily: '"Lora", Georgia, serif', color: 'var(--muted-hex)' }}
+          >
+            {totalTime > 0 && (
+              <span className="flex items-center gap-1">
+                <Clock size={12} />{totalTime}m
+              </span>
+            )}
+            {recipe.servings > 0 && (
+              <span className="flex items-center gap-1">
+                <Users size={12} />{recipe.servings}
+              </span>
+            )}
+            {recipe.calories > 0 && (
+              <span className="flex items-center gap-1">
+                <Flame size={12} />{recipe.calories}
+              </span>
+            )}
+          </div>
+          <IngredientSummary ingredients={recipe.ingredients} />
+        </div>
+      </div>
+    </Link>
+  );
+}
 
 export default function RecipeFeed() {
   const { token } = useAuth();
@@ -12,17 +104,16 @@ export default function RecipeFeed() {
   const [ingredientFilter, setIngredientFilter] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
   const lastFetchRef = useRef<number>(0);
 
-  const fetchRecipes = async () => {
+  const fetchRecipes = async (name?: string, ingredient?: string) => {
     const now = Date.now();
     if (now - lastFetchRef.current < 1000) return;
     lastFetchRef.current = now;
     setLoading(true);
     setError(null);
     try {
-      const data = await listRecipes(token, nameFilter || undefined, ingredientFilter || undefined);
+      const data = await listRecipes(token, name || undefined, ingredient || undefined);
       setRecipes(data);
     } catch {
       setError('Failed to load recipes');
@@ -39,85 +130,73 @@ export default function RecipeFeed() {
       .finally(() => setLoading(false));
   }, [token]);
 
-  return (
-    <Container className="py-4">
-      <h1 className="mb-4" style={{ color: 'var(--color-teal)' }}>Recipe Feed</h1>
+  const hasQuery = nameFilter || ingredientFilter;
 
-      <Row className="mb-4 g-2">
-        <Col md={5}>
-          <InputGroup>
+  const clearSearch = () => {
+    setNameFilter('');
+    setIngredientFilter('');
+    fetchRecipes(undefined, undefined);
+  };
+
+  return (
+    <div style={{ maxWidth: 1000, margin: '0 auto', padding: '2rem 2rem' }} className="max-md:px-4">
+      {/* Feed header */}
+      <div className="flex items-baseline justify-between mb-6">
+        <h1
+          className="md:text-[34px] text-[26px] font-medium"
+          style={{ fontFamily: '"Cinzel", Georgia, serif' }}
+        >
+          Tonight
+        </h1>
+        <span style={{ fontFamily: '"Lora", Georgia, serif', color: 'var(--muted-hex)', fontSize: 14 }}>
+          {recipes.length} recipe{recipes.length !== 1 ? 's' : ''}
+        </span>
+      </div>
+
+      {/* Search panel */}
+      <Card className="mb-6" style={{ background: 'var(--card-bg)' }}>
+        <CardContent className="pt-4">
+          <div className="flex md:flex-row flex-col gap-3">
             <Input
-              style={{ padding: '0.5rem 0.75rem' }} 
-              placeholder="Search by name..."
+              placeholder="Recipe name..."
               value={nameFilter}
               onChange={e => setNameFilter(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && fetchRecipes()}
+              onKeyDown={e => e.key === 'Enter' && fetchRecipes(nameFilter, ingredientFilter)}
             />
-          </InputGroup>
-        </Col>
-        <Col md={5}>
-          <InputGroup>
             <Input
-              style={{ padding: '0.5rem 0.75rem' }} 
               placeholder="Filter by ingredient..."
               value={ingredientFilter}
               onChange={e => setIngredientFilter(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && fetchRecipes()}
+              onKeyDown={e => e.key === 'Enter' && fetchRecipes(nameFilter, ingredientFilter)}
             />
-          </InputGroup>
-        </Col>
-        <Col md={2}>
-          <Button color="primary" onClick={fetchRecipes} className="w-100">Search</Button>
-        </Col>
-      </Row>
+            {hasQuery && (
+              <Button variant="ghost" onClick={clearSearch}>Clear</Button>
+            )}
+            <Button onClick={() => fetchRecipes(nameFilter, ingredientFilter)}>Search</Button>
+          </div>
+        </CardContent>
+      </Card>
 
-      {loading && <p className="text-muted">Loading recipes...</p>}
-      {error && <p className="text-danger">{error}</p>}
+      {/* Status */}
+      {loading && <p style={{ color: 'var(--muted-hex)' }}>Loading recipes...</p>}
+      {error && <p style={{ color: 'var(--accent-hex)' }}>{error}</p>}
 
-      <Row className="gx-3 gy-4">
-        {recipes.map(recipe => (
-          <Col key={recipe.rid} md={6} lg={4} style={{paddingTop:'1em'}}>
-            <Card className="recipe-card h-100">
-              <CardBody>
-                <CardTitle tag="h5">
-                  <Link to={`/recipes/${recipe.rid}`} style={{ color: 'var(--color-teal)', textDecoration: 'none' }}>
-                    {recipe.name}
-                  </Link>
-                </CardTitle>
-                <CardText className="text-muted small mb-2">
-                  {recipe.prep_time > 0 && `Prep: ${recipe.prep_time} Minutes`}
-                  {recipe.prep_time > 0 && recipe.cook_time > 0 && ' · '}
-                  {recipe.cook_time > 0 && `Cook: ${recipe.cook_time} Minutes`}
-                  {recipe.servings > 0 && ` · ${recipe.servings} servings`}
-                </CardText>
-                {(recipe.calories > 0 || recipe.carbs > 0 || recipe.proteins > 0 || recipe.fats > 0) && (
-                  <div className="d-flex flex-wrap gap-1 mb-2">
-                    {recipe.calories > 0 && <span className="badge rounded-pill bg-secondary">{recipe.calories} kcal</span>}
-                    {recipe.proteins > 0 && <span className="badge rounded-pill bg-secondary">{recipe.proteins}g protein</span>}
-                    {recipe.carbs > 0 && <span className="badge rounded-pill bg-secondary">{recipe.carbs}g carbs</span>}
-                    {recipe.fats > 0 && <span className="badge rounded-pill bg-secondary">{recipe.fats}g fat</span>}
-                  </div>
-                )}
-                <div>
-                  {(recipe.ingredients || []).slice(0, 4).map(ing => (
-                    <span key={ing.iid || ing.name} className="ingredient-chip me-1 mb-1">
-                      {ing.name}
-                    </span>
-                  ))}
-                  {(recipe.ingredients || []).length > 4 && (
-                    <Badge color="secondary" pill>+{(recipe.ingredients || []).length - 4}</Badge>
-                  )}
-                </div>
-              </CardBody>
-            </Card>
-          </Col>
-        ))}
-        {!loading && recipes.length === 0 && (
-          <Col>
-            <p className="text-muted">No recipes found. <Link to="/recipes/create">Create the first one!</Link></p>
-          </Col>
+      {/* Recipe list */}
+      <div className="flex flex-col" style={{ gap: 14 }}>
+        {!loading && recipes.length === 0 ? (
+          <div
+            className="rounded-md p-8 text-center"
+            style={{
+              border: '2px dashed var(--border-hex)',
+              color: 'var(--muted-hex)',
+            }}
+          >
+            No recipes match — try a different search.
+          </div>
+        ) : (
+          recipes.map(recipe => <RecipeCard key={recipe.rid} recipe={recipe} />)
         )}
-      </Row>
-    </Container>
+      </div>
+    </div>
   );
 }

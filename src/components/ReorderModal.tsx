@@ -1,5 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Modal, ModalHeader, ModalBody, ModalFooter, Button } from 'reactstrap';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
 import {
   DndContext, closestCenter, PointerSensor, useSensor, useSensors,
   DragEndEvent,
@@ -234,48 +241,52 @@ export default function ReorderModal(props: ReorderModalProps) {
   };
 
   return (
-    <Modal isOpen={isOpen} toggle={onCancel} centered>
-      <ModalHeader toggle={onCancel}>
-        {mode === 'sections' ? 'Reorder Sections' : 'Reorder Ingredients'}
-      </ModalHeader>
-      <ModalBody style={{ padding: '1rem 1.25rem' }}>
-        {mode === 'sections' ? (
-          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEndSections}>
-            <SortableContext items={sectionFlatIds} strategy={verticalListSortingStrategy}>
-              {sectionDraft.map((s, gi) => (
-                <div key={gi} style={{ marginBottom: '10px' }}>
-                  <SortableRow id={`s-${gi}`} label={s.title} isSection placeholder="Untitled section" />
-                  {s.steps.map((step, stepIdx) => (
-                    <SortableRow
-                      key={`step-${gi}-${stepIdx}`}
-                      id={`step-${gi}-${stepIdx}`}
-                      label={truncate(step)}
-                      placeholder="Empty step"
-                    />
-                  ))}
-                </div>
-              ))}
-            </SortableContext>
-          </DndContext>
-        ) : (
-          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEndIngredients}>
-            <SortableContext items={ingFlatIds} strategy={verticalListSortingStrategy}>
-              {groupDraft.map((g, gi) => (
-                <div key={gi} style={{ marginBottom: '10px' }}>
-                  <SortableRow id={`s-${gi}`} label={g.label} isSection placeholder="Unnamed section" />
-                  {g.ingredients.map((ing, ii) => (
-                    <SortableRow key={`i-${gi}-${ii}`} id={`i-${gi}-${ii}`} label={ing.name} placeholder="Unnamed ingredient" />
-                  ))}
-                </div>
-              ))}
-            </SortableContext>
-          </DndContext>
-        )}
-      </ModalBody>
-      <ModalFooter>
-        <Button color="link" onClick={onCancel}>Cancel</Button>
-        <Button color="primary" onClick={handleSave}>Save</Button>
-      </ModalFooter>
-    </Modal>
+    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onCancel(); }}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>
+            {mode === 'sections' ? 'Reorder Sections' : 'Reorder Ingredients'}
+          </DialogTitle>
+        </DialogHeader>
+        <div style={{ padding: '0.25rem 0' }}>
+          {mode === 'sections' ? (
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEndSections}>
+              <SortableContext items={sectionFlatIds} strategy={verticalListSortingStrategy}>
+                {sectionDraft.map((s, gi) => (
+                  <div key={gi} style={{ marginBottom: '10px' }}>
+                    <SortableRow id={`s-${gi}`} label={s.title} isSection placeholder="Untitled section" />
+                    {s.steps.map((step, stepIdx) => (
+                      <SortableRow
+                        key={`step-${gi}-${stepIdx}`}
+                        id={`step-${gi}-${stepIdx}`}
+                        label={truncate(step)}
+                        placeholder="Empty step"
+                      />
+                    ))}
+                  </div>
+                ))}
+              </SortableContext>
+            </DndContext>
+          ) : (
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEndIngredients}>
+              <SortableContext items={ingFlatIds} strategy={verticalListSortingStrategy}>
+                {groupDraft.map((g, gi) => (
+                  <div key={gi} style={{ marginBottom: '10px' }}>
+                    <SortableRow id={`s-${gi}`} label={g.label} isSection placeholder="Unnamed section" />
+                    {g.ingredients.map((ing, ii) => (
+                      <SortableRow key={`i-${gi}-${ii}`} id={`i-${gi}-${ii}`} label={ing.name} placeholder="Unnamed ingredient" />
+                    ))}
+                  </div>
+                ))}
+              </SortableContext>
+            </DndContext>
+          )}
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={onCancel}>Cancel</Button>
+          <Button onClick={handleSave}>Save</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

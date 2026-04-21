@@ -1,41 +1,28 @@
-import {useEffect, useState} from "react";
-import {useConstCallback} from "powerhooks";
-import {Helmet} from "react-helmet-async";
-
-const darkQuery = () => window.matchMedia("(prefers-color-scheme: dark)");
+import { useState } from 'react';
+import { Moon, Sun } from 'lucide-react';
 
 export default function ThemeToggle() {
-  const [darkMode, setDarkMode] = useState(() => darkQuery().matches);
-  useEffect(() => {
-    const query = darkQuery();
-    const onMediaChange = (event: {matches: boolean}) => {
-      setDarkMode(event.matches);
-    };
-    onMediaChange(query);
-    return () => {
-      query.removeEventListener("change", onMediaChange);
-    };
-  }, []);
+  const [dark, setDark] = useState(() => document.documentElement.classList.contains('dark'));
 
-  const onThemeToggle = useConstCallback(() => {
-    setDarkMode((darkMode) => !darkMode);
-  });
+  const toggle = () => {
+    const next = !dark;
+    setDark(next);
+    if (next) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('garnish-mode', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('garnish-mode', 'light');
+    }
+  };
 
   return (
-    <>
-      <Helmet>
-        <body className={darkMode ? "dark-theme" : undefined} />
-      </Helmet>
-      <button
-        style={{width: "32px", height: "32px"}}
-        onClick={onThemeToggle}
-        className="icon-button"
-        role="toggle"
-      >
-        <span className="material-icons-outlined" style={{fontSize: "32px"}}>
-          {darkMode ? "dark_mode" : "light_mode"}
-        </span>
-      </button>
-    </>
+    <button
+      className="nav-icon-btn"
+      onClick={toggle}
+      aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'}
+    >
+      {dark ? <Sun size={18} /> : <Moon size={18} />}
+    </button>
   );
 }
