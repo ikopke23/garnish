@@ -207,7 +207,7 @@ export default function RecipeDetail() {
 
       {/* ── Story banner ── */}
       {story && !story.is_placeholder && (
-        <div className="story-banner mx-8 max-md:mx-4 relative z-10" style={{ marginTop: '-28px', boxShadow: '0 8px 24px rgba(0,0,0,0.18)' }}>
+        <div className="story-banner mx-8 max-md:mx-4 relative z-10" style={{ marginTop: '-8cpx', boxShadow: '0 8px 24px rgba(0,0,0,0.18)' }}>
           <p style={{ fontFamily: '"Cinzel", Georgia, serif', fontWeight: 600, color: 'var(--primary-hex)', marginBottom: 4 }}>{story.name}</p>
           <p style={{ fontStyle: 'italic', fontFamily: '"Lora", Georgia, serif' }}>{story.body}</p>
           <p className="text-sm" style={{ color: 'var(--muted-hex)', marginTop: 12 }}>— {story.author_name}</p>

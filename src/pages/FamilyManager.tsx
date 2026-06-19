@@ -40,7 +40,7 @@ export default function FamilyManager() {
         .then(members => setMembersMap(m => ({ ...m, [f.fid]: members })))
         .catch(() => {}); // silent
     });
-  }, [token, families.length]); // note: families.length not families, to avoid infinite re-run
+  }, [token, families]);
 
   const handleInvite = async (fid: string) => {
     const username = addInputMap[fid]?.trim();
