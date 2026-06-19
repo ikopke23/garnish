@@ -4,6 +4,7 @@ import { createRecipe, updateRecipe, getRecipe, assignStory, RecipeIngredient, R
 import { groupIngredientsBySection } from '../utils/ingredients';
 import { listFamilies, Family } from '../api/families';
 import { listStories, Story } from '../api/stories';
+import { listPhotos, uploadPhoto, RecipePhoto } from '../api/photos';
 import { useAuth } from '../context/useAuth';
 import ReorderModal from '../components/ReorderModal';
 import { Button } from '@/components/ui/button';
@@ -43,6 +44,8 @@ export default function RecipeForm({ editMode = false }: Props) {
   const [includeStory, setIncludeStory] = useState(false);
   const [selectedStoryID, setSelectedStoryID] = useState('');
   const [stories, setStories] = useState<Story[]>([]);
+  const [pendingPhotos, setPendingPhotos] = useState<File[]>([]);
+  const [existingPhotos, setExistingPhotos] = useState<RecipePhoto[]>([]);
 
   useEffect(() => {
     if (editMode && rid) {
@@ -76,6 +79,10 @@ export default function RecipeForm({ editMode = false }: Props) {
       .then(setStories)
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (editMode && rid) listPhotos(rid).then(setExistingPhotos).catch(() => {});
+  }, [editMode, rid]);
 
   const handleReorderSave = (reordered: RecipeSection[]) => {
     setSections(reordered);
@@ -122,6 +129,14 @@ export default function RecipeForm({ editMode = false }: Props) {
   const removeEquipment = (i: number) => setEquipmentList(equipmentList.filter((_, idx) => idx !== i));
   const updateEquipment = (i: number, v: string) =>
     setEquipmentList(equipmentList.map((eq, idx) => idx === i ? { ...eq, name: v } : eq));
+
+  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    setPendingPhotos(prev => [...prev, ...files]);
+    e.target.value = '';
+  };
+  const removePending = (idx: number) =>
+    setPendingPhotos(prev => prev.filter((_, i) => i !== idx));
 
   const toggleFamily = (fid: string) =>
     setSelectedFamilyIDs(prev => {
@@ -171,6 +186,9 @@ export default function RecipeForm({ editMode = false }: Props) {
         includeStory && selectedStoryID ? selectedStoryID : null,
         !includeStory,
       );
+      for (const file of pendingPhotos) {
+        try { await uploadPhoto(token, recipe.rid, file); } catch { /* non-fatal */ }
+      }
       navigate(`/recipes/${recipe.rid}`);
     } catch {
       setError('Failed to save recipe');
@@ -398,16 +416,51 @@ export default function RecipeForm({ editMode = false }: Props) {
             <Label htmlFor="includeStory">Include story</Label>
           </div>
           {includeStory && (
-            <Select value={selectedStoryID} onValueChange={setSelectedStoryID}>
+            <Select value={selectedStoryID || 'none'} onValueChange={v => setSelectedStoryID(v === 'none' ? '' : v)}>
               <SelectTrigger><SelectValue placeholder="— no story selected —" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="">— no story selected —</SelectItem>
-                {stories.map(s => (
+                <SelectItem value="none">— no story selected —</SelectItem>
+                {stories.filter(s => !s.is_placeholder).map(s => (
                   <SelectItem key={s.sid} value={s.sid}>{s.name} — {s.author_name}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
           )}
+        </div>
+
+        {/* Photos */}
+        <div className="space-y-2 mb-4 mt-3">
+          <Label>Photos</Label>
+          {existingPhotos.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {existingPhotos.map(p => (
+                <img
+                  key={p.pid}
+                  src={p.link}
+                  alt={p.name}
+                  style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 6, border: '1px solid var(--border-hex)' }}
+                />
+              ))}
+            </div>
+          )}
+          {pendingPhotos.length > 0 && (
+            <div className="flex flex-col gap-1">
+              {pendingPhotos.map((f, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <span className="text-sm" style={{ color: 'var(--muted-hex)' }}>{f.name}</span>
+                  <button
+                    type="button"
+                    onClick={() => removePending(i)}
+                    style={{ color: 'var(--accent-hex)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                  >&#x2715;</button>
+                </div>
+              ))}
+            </div>
+          )}
+          <Input type="file" accept="image/*" multiple onChange={handlePhotoSelect} className="text-sm" />
+          <small style={{ color: 'var(--muted-hex)' }}>
+            Photos are uploaded when you save the recipe.
+          </small>
         </div>
 
         <div className="flex gap-2">

@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-d
 import PageContainer from './containers/PageContainer';
 import { AuthProvider } from './context/AuthContext';
 import { useAuth } from './context/useAuth';
+import { Toaster } from '@/components/ui/sonner';
 import './index.css';
 
 // Pages
@@ -54,6 +55,17 @@ export default function App() {
   return (
     <AuthProvider>
       <Router>
+        <Toaster
+          position="bottom-center"
+          duration={2200}
+          toastOptions={{
+            style: {
+              background: 'var(--g-text)',
+              color: 'var(--g-bg)',
+              borderRadius: '4px',
+            },
+          }}
+        />
         <AppRoutes />
       </Router>
     </AuthProvider>

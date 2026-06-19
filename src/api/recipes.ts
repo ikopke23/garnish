@@ -44,6 +44,7 @@ export interface Recipe {
   carbs: number;
   proteins: number;
   fats: number;
+  times_cooked?: number;
 }
 
 export interface RecipePayload {
@@ -57,10 +58,11 @@ export interface RecipePayload {
   is_public?: boolean;
 }
 
-export async function listRecipes(token: string | null, name?: string, ingredient?: string): Promise<Recipe[]> {
+export async function listRecipes(token: string | null, name?: string, ingredient?: string, family?: string): Promise<Recipe[]> {
   const params = new URLSearchParams();
   if (name) params.set('name', name);
   if (ingredient) params.set('ingredient', ingredient);
+  if (family) params.set('family', family);
   return apiFetch(`/recipes?${params}`, {}, token);
 }
 

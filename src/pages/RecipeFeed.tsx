@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { Clock, Users, Flame } from 'lucide-react';
 import { listRecipes, Recipe } from '../api/recipes';
 import { useAuth } from '../context/useAuth';
@@ -40,15 +40,17 @@ function RecipeCard({ recipe }: { recipe: Recipe }) {
       >
         {/* Image */}
         <div
-          className="md:w-[200px] flex-shrink-0 overflow-hidden flex items-center justify-center"
+          className="md:w-[90px] flex-shrink-0 overflow-hidden flex items-center justify-center"
           style={{ minHeight: 0, background: 'var(--muted-hex)' }}
         >
           <div className="w-full h-[180px] md:h-full" style={{ minHeight: 160 }}>
             <div
-              className="w-full h-full flex items-center justify-center text-xs"
-              style={{ color: 'var(--nav-fg)', opacity: 0.4 }}
+              className="w-full h-full flex items-center justify-center"
+              style={{ background: 'color-mix(in srgb, var(--primary-hex) 12%, var(--card-bg))' }}
             >
-              No photo
+              <span style={{ fontFamily: '"Cinzel", Georgia, serif', fontSize: 56, color: 'var(--primary-hex)', opacity: 0.4 }}>
+                {recipe.name.charAt(0).toUpperCase()}
+              </span>
             </div>
           </div>
         </div>
@@ -56,13 +58,13 @@ function RecipeCard({ recipe }: { recipe: Recipe }) {
         {/* Content */}
         <div className="flex-1 p-4 flex flex-col gap-1">
           <p
-            className="text-[10.5px] uppercase tracking-[1.5px]"
+            className="text-[10.5px] uppercase tracking-[1.5px] truncate"
             style={{ fontFamily: '"Lora", Georgia, serif', color: 'var(--muted-hex)' }}
           >
             @{recipe.author_username ?? recipe.author_uid}
           </p>
           <h2
-            className="font-semibold leading-snug md:text-[22px] text-[20px]"
+            className="font-semibold truncate md:text-[22px] text-[20px]"
             style={{
               fontFamily: '"Cinzel", Georgia, serif',
               color: 'var(--text)',
@@ -99,21 +101,24 @@ function RecipeCard({ recipe }: { recipe: Recipe }) {
 
 export default function RecipeFeed() {
   const { token } = useAuth();
+  const [searchParams] = useSearchParams();
+  const initialFamily = searchParams.get('family') ?? '';
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [nameFilter, setNameFilter] = useState('');
   const [ingredientFilter, setIngredientFilter] = useState('');
+  const [familyFilter, setFamilyFilter] = useState(initialFamily);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const lastFetchRef = useRef<number>(0);
 
-  const fetchRecipes = async (name?: string, ingredient?: string) => {
+  const fetchRecipes = async (name?: string, ingredient?: string, family?: string) => {
     const now = Date.now();
     if (now - lastFetchRef.current < 1000) return;
     lastFetchRef.current = now;
     setLoading(true);
     setError(null);
     try {
-      const data = await listRecipes(token, name || undefined, ingredient || undefined);
+      const data = await listRecipes(token, name || undefined, ingredient || undefined, family || undefined);
       setRecipes(data);
     } catch {
       setError('Failed to load recipes');
@@ -124,22 +129,23 @@ export default function RecipeFeed() {
 
   useEffect(() => {
     setLoading(true);
-    listRecipes(token, undefined, undefined)
+    listRecipes(token, undefined, undefined, familyFilter || undefined)
       .then(data => setRecipes(data))
       .catch(() => setError('Failed to load recipes'))
       .finally(() => setLoading(false));
-  }, [token]);
+  }, [token, familyFilter]);
 
   const hasQuery = nameFilter || ingredientFilter;
 
   const clearSearch = () => {
     setNameFilter('');
     setIngredientFilter('');
-    fetchRecipes(undefined, undefined);
+    setFamilyFilter('');
+    fetchRecipes(undefined, undefined, undefined);
   };
 
   return (
-    <div style={{ maxWidth: 1000, margin: '0 auto', padding: '2rem 2rem' }} className="max-md:px-4">
+    <div style={{ maxWidth: 1680, width: '100%', margin: '0 auto', padding: '2rem 2rem' }} className="max-md:px-4">
       {/* Feed header */}
       <div className="flex items-baseline justify-between mb-6">
         <h1
@@ -161,18 +167,18 @@ export default function RecipeFeed() {
               placeholder="Recipe name..."
               value={nameFilter}
               onChange={e => setNameFilter(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && fetchRecipes(nameFilter, ingredientFilter)}
+              onKeyDown={e => e.key === 'Enter' && fetchRecipes(nameFilter, ingredientFilter, familyFilter)}
             />
             <Input
               placeholder="Filter by ingredient..."
               value={ingredientFilter}
               onChange={e => setIngredientFilter(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && fetchRecipes(nameFilter, ingredientFilter)}
+              onKeyDown={e => e.key === 'Enter' && fetchRecipes(nameFilter, ingredientFilter, familyFilter)}
             />
             {hasQuery && (
               <Button variant="ghost" onClick={clearSearch}>Clear</Button>
             )}
-            <Button onClick={() => fetchRecipes(nameFilter, ingredientFilter)}>Search</Button>
+            <Button onClick={() => fetchRecipes(nameFilter, ingredientFilter, familyFilter)}>Search</Button>
           </div>
         </CardContent>
       </Card>
@@ -181,8 +187,24 @@ export default function RecipeFeed() {
       {loading && <p style={{ color: 'var(--muted-hex)' }}>Loading recipes...</p>}
       {error && <p style={{ color: 'var(--accent-hex)' }}>{error}</p>}
 
+      {/* Family filter indicator */}
+      {familyFilter && (
+        <div className="flex items-center gap-2 mb-4 text-sm"
+          style={{ color: 'var(--g-muted)', fontFamily: 'Lora, Georgia, serif' }}>
+          <span>Showing recipes from a family</span>
+          <button
+            onClick={() => { setFamilyFilter(''); }}
+            style={{ color: 'var(--g-primary)', fontFamily: 'Lora, Georgia, serif', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline', padding: 0 }}>
+            × clear filter
+          </button>
+        </div>
+      )}
+
       {/* Recipe list */}
-      <div className="flex flex-col" style={{ gap: 14 }}>
+      <div
+        className="max-md:flex max-md:flex-col md:grid"
+        style={{ gap: '1rem', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))' }}
+      >
         {!loading && recipes.length === 0 ? (
           <div
             className="rounded-md p-8 text-center"

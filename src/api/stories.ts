@@ -12,8 +12,8 @@ export interface Story {
   updated_at: string;
 }
 
-export async function getStory(sid: string): Promise<Story> {
-  return apiFetch(`/stories/${sid}`);
+export async function getStory(token: string, sid: string): Promise<Story> {
+  return apiFetch(`/stories/${sid}`, {}, token);
 }
 
 export async function createStory(token: string, name: string, body: string): Promise<Story> {

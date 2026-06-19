@@ -13,14 +13,18 @@ import ProgressMini from '../components/ProgressMini';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { useRecipeProgress } from '../hooks/useRecipeProgress';
+import CookMode from '../components/CookMode';
 
 export default function RecipeDetail() {
   const { rid } = useParams<{ rid: string }>();
   const [recipe, setRecipe] = useState<Recipe | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [checkedIngredients, setCheckedIngredients] = useState<Set<string>>(new Set());
-  const [checkedSteps, setCheckedSteps] = useState<Set<string>>(new Set());
+  const [progress, setProgress] = useRecipeProgress(rid ?? '');
+  const checkedIngredients = new Set(progress.ingredients);
+  const checkedSteps = new Set(progress.steps);
+  const [cookModeOpen, setCookModeOpen] = useState(false);
   const [photos, setPhotos] = useState<RecipePhoto[]>([]);
   const [story, setStory] = useState<Story | null>(null);
   const [randomStory, setRandomStory] = useState<Story | null>(null);
@@ -44,7 +48,7 @@ export default function RecipeDetail() {
 
   useEffect(() => {
     if (recipe?.story_id && !recipe.disable_story) {
-      getStory(recipe.story_id).then(s => {
+      getStory(token ?? '', recipe.story_id).then(s => {
         setStory(s);
         if (s.is_placeholder) {
           getRandomStory(s.sid).then(setRandomStory).catch(() => setRandomStory(null));
@@ -56,7 +60,7 @@ export default function RecipeDetail() {
       setStory(null);
       setRandomStory(null);
     }
-  }, [recipe?.story_id, recipe?.disable_story]);
+  }, [recipe?.story_id, recipe?.disable_story, token]);
 
   useEffect(() => {
     if (isAuthenticated && token && rid) {
@@ -112,19 +116,17 @@ export default function RecipeDetail() {
     await setNotesAPI(token, rid, userNotes).catch(() => {});
   };
 
-  const toggleIngredient = (key: string) =>
-    setCheckedIngredients(prev => {
-      const next = new Set(prev);
-      if (next.has(key)) { next.delete(key); } else { next.add(key); }
-      return next;
-    });
+  const toggleIngredient = (key: string) => {
+    const next = new Set(checkedIngredients);
+    if (next.has(key)) { next.delete(key); } else { next.add(key); }
+    setProgress({ ingredients: [...next] });
+  };
 
-  const toggleStep = (key: string) =>
-    setCheckedSteps(prev => {
-      const next = new Set(prev);
-      if (next.has(key)) { next.delete(key); } else { next.add(key); }
-      return next;
-    });
+  const toggleStep = (key: string) => {
+    const next = new Set(checkedSteps);
+    if (next.has(key)) { next.delete(key); } else { next.add(key); }
+    setProgress({ steps: [...next] });
+  };
 
   if (loading) return <div className="py-8 px-4">Loading...</div>;
   if (error || !recipe) return <div className="py-8 px-4" style={{ color: 'var(--accent-hex)' }}>{error || 'Recipe not found'}</div>;
@@ -205,7 +207,7 @@ export default function RecipeDetail() {
 
       {/* ── Story banner ── */}
       {story && !story.is_placeholder && (
-        <div className="story-banner mx-8 max-md:mx-4 -mt-3 relative z-10" style={{ boxShadow: '0 8px 24px rgba(0,0,0,0.18)' }}>
+        <div className="story-banner mx-8 max-md:mx-4 relative z-10" style={{ marginTop: '-28px', boxShadow: '0 8px 24px rgba(0,0,0,0.18)' }}>
           <p style={{ fontFamily: '"Cinzel", Georgia, serif', fontWeight: 600, color: 'var(--primary-hex)', marginBottom: 4 }}>{story.name}</p>
           <p style={{ fontStyle: 'italic', fontFamily: '"Lora", Georgia, serif' }}>{story.body}</p>
           <p className="text-sm" style={{ color: 'var(--muted-hex)', marginTop: 12 }}>— {story.author_name}</p>
@@ -310,9 +312,14 @@ export default function RecipeDetail() {
         <div>
           {recipe.sections && recipe.sections.length > 0 && (
             <section>
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center justify-between mb-4 gap-3">
                 <h2 style={{ fontFamily: '"Cinzel", Georgia, serif', fontSize: 13, letterSpacing: 2, textTransform: 'uppercase' }}>Method</h2>
-                <ProgressMini done={stepsDone} total={stepsTotal} />
+                <div className="flex items-center gap-2">
+                  <ProgressMini done={stepsDone} total={stepsTotal} />
+                  <Button variant="outline" size="sm" className="no-print" onClick={() => setCookModeOpen(true)}>
+                    Cook Mode
+                  </Button>
+                </div>
               </div>
               {(() => {
                 let globalStepNum = 0;
@@ -418,6 +425,17 @@ export default function RecipeDetail() {
           token={token}
         />
       </div>
+      <CookMode
+        recipe={recipe}
+        open={cookModeOpen}
+        onClose={() => setCookModeOpen(false)}
+        checkedSteps={checkedSteps}
+        onStepToggle={(key) => {
+          const next = new Set(checkedSteps);
+          if (next.has(key)) { next.delete(key); } else { next.add(key); }
+          setProgress({ steps: [...next] });
+        }}
+      />
     </div>
   );
 }
