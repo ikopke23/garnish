@@ -16,6 +16,8 @@ import UserProfile from './pages/UserProfile';
 import FamilyManager from './pages/FamilyManager';
 import StoryForm from './pages/StoryForm';
 import NotFound from './pages/NotFound';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 
 function ProtectedRoute({ children }: { children: ReactNode }) {
   const { isAuthenticated } = useAuth();
@@ -37,6 +39,8 @@ function AppRoutes() {
         } />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/profile" element={
           <ProtectedRoute><UserProfile /></ProtectedRoute>
         } />

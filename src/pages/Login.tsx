@@ -90,9 +90,12 @@ export default function Login() {
             Login with CSH SSO
           </Button>
         </CardContent>
-        <CardFooter>
+        <CardFooter className="flex flex-col gap-1">
           <p className="text-sm text-center w-full" style={{ color: 'var(--muted-hex)' }}>
             No account? <Link to="/register" style={{ color: 'var(--primary-hex)' }}>Register</Link>
+          </p>
+          <p className="text-sm text-center w-full" style={{ color: 'var(--muted-hex)' }}>
+            <Link to="/forgot-password" style={{ color: 'var(--primary-hex)' }}>Forgot password?</Link>
           </p>
         </CardFooter>
       </Card>
