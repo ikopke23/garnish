@@ -1,67 +1,54 @@
-# CSH React Boilerplate
+# Garnish
 
-## Getting Started
+React/TypeScript frontend for the recipe book application. A single-page app for browsing, creating, and managing recipes, ingredients, equipment, stories, and family groups.
 
-Build the container
+## Stack
 
-``` sh
-docker build -t csh-react-boilerplate .
+- **React 18** + **TypeScript** with [Vite](https://vitejs.dev/)
+- **reactstrap** + **csh-material-bootstrap** for UI components
+- **react-router-dom** for client-side routing
+- JWT auth stored in `localStorage`
 
+## Running
+
+```sh
+cd garnish
+npm run dev      # Vite dev server on localhost:5173
 ```
 
-Run the container
+The dev server proxies nothing — requests go directly to the API at `VITE_API_PREFIX`.
 
-``` sh
-docker run -p 8080:8080 csh-react-boilerplate:latest
+## Build
+
+```sh
+npm run build
 ```
 
-## React + TypeScript + Vite
+## Environment Variables
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Create a `.env` file in `garnish/`:
 
-Currently, two official plugins are available:
-
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
-### Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
-
-- Configure the top-level `parserOptions` property like this:
-
-```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ["./tsconfig.node.json", "./tsconfig.app.json"],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-});
+```env
+VITE_API_PREFIX=http://localhost:8080
+VITE_SSO_ENABLED=false
 ```
 
-- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
-- Optionally add `...tseslint.configs.stylisticTypeChecked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
+## Architecture
 
-```js
-// eslint.config.js
-import react from "eslint-plugin-react";
+- `src/context/AuthContext.tsx` — `AuthProvider` wraps the app; `useAuth()` exposes `token`, `user` (`{uid, username}`), `login()`, `logout()`, `isAuthenticated`. JWT claims are parsed client-side from `localStorage`.
+- `src/api/` — one file per domain (auth, recipes, ingredients, equipment, stories, families); all functions accept `token: string | null`.
+- `src/App.tsx` — `BrowserRouter` + `AuthProvider`; `ProtectedRoute` redirects unauthenticated users to `/login`.
+- `src/styles/theme.scss` — CSS custom properties (`--color-teal`, `--color-sand`, etc.)
 
-export default tseslint.config({
-  // Set the react version
-  settings: {react: {version: "18.3"}},
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs["jsx-runtime"].rules,
-  },
-});
-```
+## Pages
+
+| Route | Page |
+|---|---|
+| `/` | RecipeFeed — search by name and ingredient |
+| `/recipes/:rid` | RecipeDetail — story banner, ingredient chips, comments |
+| `/recipes/create` | RecipeForm |
+| `/recipes/:rid/edit` | RecipeForm (edit mode) |
+| `/login` | Login |
+| `/register` | Register |
+| `/profile` | UserProfile |
+| `/family` | FamilyManager |
