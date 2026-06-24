@@ -213,7 +213,7 @@ export default function RecipeFeed() {
               color: 'var(--muted-hex)',
             }}
           >
-            No recipes match — try a different search.
+            No recipes match - try a different search.
           </div>
         ) : (
           recipes.map(recipe => <RecipeCard key={recipe.rid} recipe={recipe} />)
