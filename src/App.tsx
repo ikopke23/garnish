@@ -15,6 +15,7 @@ import Register from './pages/Register';
 import UserProfile from './pages/UserProfile';
 import FamilyManager from './pages/FamilyManager';
 import StoryForm from './pages/StoryForm';
+import RecipeImport from './pages/RecipeImport';
 import NotFound from './pages/NotFound';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
@@ -46,6 +47,9 @@ function AppRoutes() {
         } />
         <Route path="/family" element={
           <ProtectedRoute><FamilyManager /></ProtectedRoute>
+        } />
+        <Route path="/recipes/import" element={
+          <ProtectedRoute><RecipeImport /></ProtectedRoute>
         } />
         <Route path="/stories/new" element={<ProtectedRoute><StoryForm /></ProtectedRoute>} />
         <Route path="/stories/:sid/edit" element={<ProtectedRoute><StoryForm editMode /></ProtectedRoute>} />

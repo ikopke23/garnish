@@ -1,7 +1,8 @@
 import { useState, useEffect, FormEvent } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { createRecipe, updateRecipe, getRecipe, assignStory, RecipeIngredient, RecipeEquipment, RecipeSection, IngredientGroup } from '../api/recipes';
 import { groupIngredientsBySection } from '../utils/ingredients';
+import type { ParsedIngredient, ParsedRecipe } from '../api/import';
 import { listFamilies, Family } from '../api/families';
 import { listStories, Story } from '../api/stories';
 import { listPhotos, uploadPhoto, RecipePhoto } from '../api/photos';
@@ -19,10 +20,25 @@ interface Props {
   editMode?: boolean;
 }
 
+function buildIngredientGroups(ingredients: ParsedIngredient[]): IngredientGroup[] {
+  const order: string[] = [];
+  const map = new Map<string, IngredientGroup>();
+  for (const ing of ingredients) {
+    const key = ing.section ?? '';
+    if (!map.has(key)) {
+      order.push(key);
+      map.set(key, { label: key, ingredients: [] });
+    }
+    map.get(key)!.ingredients.push({ name: ing.name, quantity: ing.quantity, unit: ing.unit });
+  }
+  return order.map(k => map.get(k)!);
+}
+
 export default function RecipeForm({ editMode = false }: Props) {
   const { rid } = useParams<{ rid: string }>();
   const { token } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [name, setName] = useState('');
   const [sections, setSections] = useState<RecipeSection[]>([{ title: '', steps: [''] }]);
@@ -50,6 +66,27 @@ export default function RecipeForm({ editMode = false }: Props) {
   const [stories, setStories] = useState<Story[]>([]);
   const [pendingPhotos, setPendingPhotos] = useState<File[]>([]);
   const [existingPhotos, setExistingPhotos] = useState<RecipePhoto[]>([]);
+
+  useEffect(() => {
+    const imported = (location.state as { importedRecipe?: ParsedRecipe } | null)?.importedRecipe;
+    if (!imported) return;
+    if (imported.name) setName(imported.name);
+    if (imported.prep_time) setPrepTime(imported.prep_time);
+    if (imported.cook_time) setCookTime(imported.cook_time);
+    if (imported.servings) setServings(imported.servings);
+    if (imported.sections?.length) {
+      setSections(imported.sections.map(s => ({
+        title: s.title,
+        steps: s.steps.length > 0 ? s.steps : [''],
+      })));
+    }
+    if (imported.equipment?.length) {
+      setEquipmentList(imported.equipment.map(e => ({ name: e.name })));
+    }
+    if (imported.ingredients?.length) {
+      setIngredientGroups(buildIngredientGroups(imported.ingredients));
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (editMode && rid) {

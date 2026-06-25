@@ -72,6 +72,7 @@ export default function NavBar() {
           {isAuthenticated && (
             <>
               <NavLink to="/recipes/create" style={navLinkStyle}>Create</NavLink>
+              <NavLink to="/recipes/import" style={navLinkStyle}>Import</NavLink>
               <NavLink to="/stories/new" style={navLinkStyle}>Story</NavLink>
               <NavLink to="/family" style={navLinkStyle}>Family</NavLink>
             </>
