@@ -1,6 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import { ChefHat } from 'lucide-react';
-import ThemeToggle from './ThemeToggle';
 import ThemeSwitcher from './ThemeSwitcher';
 import { useAuth } from '../context/useAuth';
 import {
@@ -80,7 +79,6 @@ export default function NavBar() {
 
         {/* Right trio */}
         <div className="ml-auto flex items-center gap-2">
-          <ThemeToggle />
           <ThemeSwitcher />
 
           {isAuthenticated ? (
