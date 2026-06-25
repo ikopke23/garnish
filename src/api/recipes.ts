@@ -56,6 +56,10 @@ export interface RecipePayload {
   ingredients: RecipeIngredient[];
   equipment: RecipeEquipment[];
   is_public?: boolean;
+  calories: number;
+  carbs: number;
+  proteins: number;
+  fats: number;
 }
 
 export async function listRecipes(token: string | null, name?: string, ingredient?: string, family?: string): Promise<Recipe[]> {

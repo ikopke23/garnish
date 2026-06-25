@@ -30,6 +30,10 @@ export default function RecipeForm({ editMode = false }: Props) {
   const [prepTime, setPrepTime] = useState(0);
   const [cookTime, setCookTime] = useState(0);
   const [servings, setServings] = useState(1);
+  const [calories, setCalories] = useState(0);
+  const [proteins, setProteins] = useState(0);
+  const [carbs, setCarbs] = useState(0);
+  const [fats, setFats] = useState(0);
   const [ingredientGroups, setIngredientGroups] = useState<IngredientGroup[]>([
     { label: '', ingredients: [{ name: '', quantity: 0, unit: '' }] }
   ]);
@@ -55,6 +59,10 @@ export default function RecipeForm({ editMode = false }: Props) {
         setPrepTime(r.prep_time);
         setCookTime(r.cook_time);
         setServings(r.servings || 1);
+        setCalories(r.calories || 0);
+        setProteins(r.proteins || 0);
+        setCarbs(r.carbs || 0);
+        setFats(r.fats || 0);
         setEquipmentList(r.equipment?.length ? r.equipment : [{ name: '' }]);
         setIsPublic(r.is_public !== false);
         setIncludeStory(!r.disable_story);
@@ -161,6 +169,10 @@ export default function RecipeForm({ editMode = false }: Props) {
       prep_time: prepTime,
       cook_time: cookTime,
       servings,
+      calories,
+      proteins,
+      carbs,
+      fats,
       ingredients: ingredientGroups.flatMap((g, gi) =>
         g.ingredients.filter(i => i.name.trim()).map((ing, ii) => ({
           ...ing,
@@ -229,6 +241,25 @@ export default function RecipeForm({ editMode = false }: Props) {
           <div className="space-y-2 mb-4">
             <Label>Servings</Label>
             <Input type="number" min={1} value={servings} onChange={e => setServings(+e.target.value)} />
+          </div>
+        </div>
+
+        <div className="grid md:grid-cols-4 grid-cols-1 gap-4">
+          <div className="space-y-2 mb-4">
+            <Label>Calories (kcal)</Label>
+            <Input type="number" min={0} value={calories} onChange={e => setCalories(+e.target.value)} />
+          </div>
+          <div className="space-y-2 mb-4">
+            <Label>Protein (g)</Label>
+            <Input type="number" min={0} value={proteins} onChange={e => setProteins(+e.target.value)} />
+          </div>
+          <div className="space-y-2 mb-4">
+            <Label>Carbs (g)</Label>
+            <Input type="number" min={0} value={carbs} onChange={e => setCarbs(+e.target.value)} />
+          </div>
+          <div className="space-y-2 mb-4">
+            <Label>Fat (g)</Label>
+            <Input type="number" min={0} value={fats} onChange={e => setFats(+e.target.value)} />
           </div>
         </div>
 
