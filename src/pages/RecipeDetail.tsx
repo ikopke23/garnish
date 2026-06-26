@@ -14,6 +14,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { useRecipeProgress } from '../hooks/useRecipeProgress';
+import { useRecipeMultiplier } from '../hooks/useRecipeMultiplier';
+import { formatQty } from '../utils/format';
 import CookMode from '../components/CookMode';
 
 export default function RecipeDetail() {
@@ -22,6 +24,7 @@ export default function RecipeDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [progress, setProgress] = useRecipeProgress(rid ?? '');
+  const [multiplier, setMultiplier] = useRecipeMultiplier(rid ?? '');
   const checkedIngredients = new Set(progress.ingredients);
   const checkedSteps = new Set(progress.steps);
   const [cookModeOpen, setCookModeOpen] = useState(false);
@@ -257,7 +260,53 @@ export default function RecipeDetail() {
             <section className="mb-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 style={{ fontFamily: '"Cinzel", Georgia, serif', fontSize: 13, letterSpacing: 2, textTransform: 'uppercase' }}>Ingredients</h2>
-                <ProgressMini done={ingDone} total={ingTotal} />
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <ProgressMini done={ingDone} total={ingTotal} />
+                  <select
+                    value={[0.5, 1, 2, 3, 4].includes(multiplier) ? String(multiplier) : 'custom'}
+                    onChange={e => {
+                      if (e.target.value !== 'custom') setMultiplier(parseFloat(e.target.value));
+                    }}
+                    style={{
+                      fontSize: 12,
+                      fontFamily: '"Cinzel", Georgia, serif',
+                      color: 'var(--muted-hex)',
+                      background: 'var(--bg)',
+                      border: '1px solid var(--border-hex)',
+                      borderRadius: 4,
+                      padding: '2px 4px',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <option value="0.5">½×</option>
+                    <option value="1">1×</option>
+                    <option value="2">2×</option>
+                    <option value="3">3×</option>
+                    <option value="4">4×</option>
+                    <option value="custom" disabled>Custom</option>
+                  </select>
+                  <input
+                    type="number"
+                    min="0.01"
+                    step="0.25"
+                    value={multiplier}
+                    onChange={e => {
+                      const n = parseFloat(e.target.value);
+                      if (isFinite(n) && n > 0) setMultiplier(n);
+                    }}
+                    style={{
+                      width: 56,
+                      fontSize: 12,
+                      fontFamily: '"Cinzel", Georgia, serif',
+                      color: 'var(--muted-hex)',
+                      background: 'var(--bg)',
+                      border: '1px solid var(--border-hex)',
+                      borderRadius: 4,
+                      padding: '2px 4px',
+                      textAlign: 'center',
+                    }}
+                  />
+                </div>
               </div>
               {(() => {
                 const groups = groupIngredientsBySection(recipe.ingredients!);
@@ -282,7 +331,7 @@ export default function RecipeDetail() {
                           <span style={{ fontFamily: '"Lora", Georgia, serif', fontSize: 13.5 }}>
                             {ing.quantity > 0 && (
                               <span style={{ fontWeight: 700, color: 'var(--primary-hex)' }}>
-                                {ing.quantity}{ing.unit ? ` ${ing.unit}` : ''}
+                                {formatQty(ing.quantity * multiplier)}{ing.unit ? ` ${ing.unit}` : ''}
                               </span>
                             )}{' '}
                             <span style={{ color: 'var(--text)' }}>{ing.name}</span>
@@ -430,6 +479,7 @@ export default function RecipeDetail() {
         open={cookModeOpen}
         onClose={() => setCookModeOpen(false)}
         checkedSteps={checkedSteps}
+        multiplier={multiplier}
         onStepToggle={(key) => {
           const next = new Set(checkedSteps);
           if (next.has(key)) { next.delete(key); } else { next.add(key); }
