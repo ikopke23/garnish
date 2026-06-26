@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 export function useRecipeMultiplier(rid: string): [number, (v: number) => void] {
   const key = `recipeMultiplier-${rid}`;
 
-  const [multiplier, setMultiplier] = useState<number>(() => {
+  const [multiplier, setMultiplierRaw] = useState<number>(() => {
     try {
       const raw = localStorage.getItem(key);
       if (raw !== null) {
@@ -23,6 +23,10 @@ export function useRecipeMultiplier(rid: string): [number, (v: number) => void] 
       // private browsing — ignore
     }
   }, [multiplier, key]);
+
+  const setMultiplier = (v: number) => {
+    if (isFinite(v) && v > 0) setMultiplierRaw(v);
+  };
 
   return [multiplier, setMultiplier];
 }
