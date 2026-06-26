@@ -3,6 +3,7 @@ import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useWakeLock } from '../hooks/useWakeLock';
 import type { Recipe } from '../api/recipes';
+import { formatQty } from '../utils/format';
 
 interface CookModeProps {
   recipe: Recipe;
@@ -10,6 +11,7 @@ interface CookModeProps {
   onClose: () => void;
   checkedSteps: Set<string>;
   onStepToggle: (key: string) => void;
+  multiplier?: number;
 }
 
 interface FlatStep {
@@ -28,7 +30,7 @@ function buildFlatSteps(recipe: Recipe): FlatStep[] {
   );
 }
 
-export default function CookMode({ recipe, open, onClose, onStepToggle }: Omit<CookModeProps, 'checkedSteps'> & { checkedSteps: Set<string> }) {
+export default function CookMode({ recipe, open, onClose, onStepToggle, multiplier = 1 }: Omit<CookModeProps, 'checkedSteps'> & { checkedSteps: Set<string> }) {
   const [currentIdx, setCurrentIdx] = useState(0);
   const [stepsPerView, setStepsPerView] = useState<number>(() => {
     try {
@@ -204,9 +206,9 @@ export default function CookMode({ recipe, open, onClose, onStepToggle }: Omit<C
               {matched.map((ing, i) => (
                 <span key={i} className="ingredient-chip ingredient-chip-0">
                   {ing.quantity && ing.unit
-                    ? `${ing.quantity} ${ing.unit} ${ing.name}`
+                    ? `${formatQty(ing.quantity * multiplier)} ${ing.unit} ${ing.name}`
                     : ing.quantity
-                    ? `${ing.quantity} ${ing.name}`
+                    ? `${formatQty(ing.quantity * multiplier)} ${ing.name}`
                     : ing.name}
                 </span>
               ))}
