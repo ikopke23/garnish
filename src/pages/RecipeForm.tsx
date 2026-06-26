@@ -432,9 +432,9 @@ export default function RecipeForm({ editMode = false }: Props) {
           <Button size="sm" variant="outline" onClick={addSection} type="button">
             + Add Section
           </Button>
-          {sections.length > 1 && (
+          {sections.length >= 1 && (
             <Button size="sm" variant="outline" onClick={() => setReorderOpen(true)} type="button">
-              ⠿ Reorder Sections
+              {sections.length === 1 ? '⠿ Reorder Steps' : '⠿ Reorder Sections'}
             </Button>
           )}
         </div>

@@ -30,6 +30,15 @@ function buildFlatSteps(recipe: Recipe): FlatStep[] {
 
 export default function CookMode({ recipe, open, onClose, onStepToggle }: Omit<CookModeProps, 'checkedSteps'> & { checkedSteps: Set<string> }) {
   const [currentIdx, setCurrentIdx] = useState(0);
+  const [stepsPerView, setStepsPerView] = useState<number>(() => {
+    try {
+      const stored = localStorage.getItem('cookModeStepsPerView');
+      const n = stored ? parseInt(stored, 10) : 1;
+      return n >= 1 && n <= 4 ? n : 1;
+    } catch {
+      return 1;
+    }
+  });
   useWakeLock(open);
 
   const steps = buildFlatSteps(recipe);
@@ -52,12 +61,21 @@ export default function CookMode({ recipe, open, onClose, onStepToggle }: Omit<C
     return () => window.removeEventListener('keydown', handler);
   }, [open, current, total, onStepToggle, onClose]);
 
+  useEffect(() => {
+    try {
+      localStorage.setItem('cookModeStepsPerView', String(stepsPerView));
+    } catch {
+      // private browsing — ignore
+    }
+  }, [stepsPerView]);
+
   if (!open || !current) return null;
 
   const stepLower = current.text.toLowerCase();
   const matched = (recipe.ingredients ?? []).filter(ing => stepLower.includes(ing.name.toLowerCase()));
 
   const isLast = currentIdx === total - 1;
+  const windowSteps = steps.slice(currentIdx, currentIdx + stepsPerView);
 
   const handleNext = () => {
     onStepToggle(current.key);
@@ -92,17 +110,40 @@ export default function CookMode({ recipe, open, onClose, onStepToggle }: Omit<C
         <span style={{ fontFamily: '"Lora", Georgia, serif', fontSize: 15, color: 'var(--muted-hex)' }}>
           {recipe.name}
         </span>
-        <span style={{ fontFamily: '"Cinzel", Georgia, serif', fontSize: 13, color: 'var(--muted-hex)', letterSpacing: '0.05em' }}>
-          Step {currentIdx + 1} / {total}
-        </span>
-        <button
-          className="icon-button"
-          onClick={onClose}
-          aria-label="Close cook mode"
-          style={{ color: 'var(--text)' }}
-        >
-          <X size={20} />
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontFamily: '"Cinzel", Georgia, serif', fontSize: 13, color: 'var(--muted-hex)', letterSpacing: '0.05em' }}>
+            Step {currentIdx + 1} / {total}
+          </span>
+          <select
+            value={stepsPerView}
+            onChange={e => setStepsPerView(Number(e.target.value))}
+            aria-label="Steps per view"
+            style={{
+              fontSize: 13,
+              fontFamily: '"Cinzel", Georgia, serif',
+              color: 'var(--muted-hex)',
+              background: 'var(--bg)',
+              border: '1px solid var(--border-hex)',
+              borderRadius: 4,
+              padding: '2px 4px',
+              width: 72,
+              cursor: 'pointer',
+            }}
+          >
+            <option value={1}>1 step</option>
+            <option value={2}>2 steps</option>
+            <option value={3}>3 steps</option>
+            <option value={4}>4 steps</option>
+          </select>
+          <button
+            className="icon-button"
+            onClick={onClose}
+            aria-label="Close cook mode"
+            style={{ color: 'var(--text)' }}
+          >
+            <X size={20} />
+          </button>
+        </div>
       </div>
 
       <div style={{
@@ -111,32 +152,48 @@ export default function CookMode({ recipe, open, onClose, onStepToggle }: Omit<C
         padding: '2rem 2rem 1rem',
         display: 'flex',
         flexDirection: 'column',
-        gap: '1.5rem',
+        gap: stepsPerView > 1 ? '2.5rem' : '1.5rem',
       }}>
-        {current.sectionTitle && (
-          <p style={{ fontFamily: '"Cinzel", Georgia, serif', fontSize: 11, textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--primary-hex)', margin: 0 }}>
-            {current.sectionTitle}
-          </p>
-        )}
-        <div style={{
-          fontFamily: '"Cinzel", Georgia, serif',
-          fontSize: 96,
-          fontWeight: 700,
-          color: 'var(--primary-hex)',
-          lineHeight: 1,
-          opacity: 0.15,
-        }}>
-          {currentIdx + 1}
-        </div>
-        <p style={{
-          fontFamily: '"Lora", Georgia, serif',
-          fontSize: 'clamp(17px, 4vw, 20px)',
-          lineHeight: 1.7,
-          color: 'var(--text)',
-          margin: 0,
-        }}>
-          {current.text}
-        </p>
+        {windowSteps.map((step, wi) => {
+          const isActive = wi === 0;
+          return (
+            <div key={step.key} style={{ opacity: isActive ? 1 : 0.45 }}>
+              {step.sectionTitle && (
+                <p style={{
+                  fontFamily: '"Cinzel", Georgia, serif',
+                  fontSize: 11,
+                  textTransform: 'uppercase',
+                  letterSpacing: '2px',
+                  color: 'var(--primary-hex)',
+                  margin: '0 0 0.5rem',
+                }}>
+                  {step.sectionTitle}
+                </p>
+              )}
+              {isActive && (
+                <div style={{
+                  fontFamily: '"Cinzel", Georgia, serif',
+                  fontSize: 96,
+                  fontWeight: 700,
+                  color: 'var(--primary-hex)',
+                  lineHeight: 1,
+                  opacity: 0.15,
+                }}>
+                  {currentIdx + 1}
+                </div>
+              )}
+              <p style={{
+                fontFamily: '"Lora", Georgia, serif',
+                fontSize: isActive ? 'clamp(26px, 5vw, 36px)' : 'clamp(16px, 3vw, 20px)',
+                lineHeight: isActive ? 1.65 : 1.6,
+                color: 'var(--text)',
+                margin: 0,
+              }}>
+                {step.text}
+              </p>
+            </div>
+          );
+        })}
 
         {matched.length > 0 && (
           <div>
