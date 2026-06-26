@@ -10,6 +10,7 @@ import { useTheme, type ThemeKey } from '../hooks/useTheme';
 import ThemeToggle from './ThemeToggle';
 
 const THEMES: { key: ThemeKey; label: string; tagline: string; dots: [string, string, string] }[] = [
+  { key: 'rose',  label: 'Rose & Honey', tagline: 'Raspberry & honey',  dots: ['#D6336C', '#EBA13C', '#B5174E'] },
   { key: 'ember', label: 'Fire & Ember', tagline: 'Warm autumn tones',  dots: ['#FF8200', '#FFC100', '#FF0000'] },
   { key: 'sage',  label: 'Sage & Olive', tagline: 'Cool garden greens', dots: ['#5F7A3F', '#B89D3C', '#A64B2A'] },
   { key: 'plum',  label: 'Plum & Bone',  tagline: 'Rich jewel tones',   dots: ['#6B2E4E', '#C08A5C', '#A43F3F'] },

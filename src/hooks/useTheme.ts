@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-export type ThemeKey = 'ember' | 'sage' | 'plum';
+export type ThemeKey = 'rose' | 'ember' | 'sage' | 'plum';
 
 export function useTheme(): [ThemeKey, (theme: ThemeKey) => void] {
   const [theme, setThemeState] = useState<ThemeKey>(
