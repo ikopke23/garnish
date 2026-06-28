@@ -21,6 +21,7 @@ export default function ThemeToggle() {
       className="nav-icon-btn"
       onClick={toggle}
       aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'}
+      style={{ color: 'var(--text)' }}
     >
       {dark ? <Sun size={18} /> : <Moon size={18} />}
     </button>
