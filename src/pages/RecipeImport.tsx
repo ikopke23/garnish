@@ -75,7 +75,9 @@ export default function RecipeImport() {
   };
 
   const handleProceed = () => {
-    navigate('/recipes/create', { state: { importedRecipe: parsed } });
+    navigate('/recipes/create', {
+      state: { importedRecipe: parsed, importedSource: mode === 'url' ? urlInput.trim() : undefined },
+    });
   };
 
   // ── Phase 2: Preview ──────────────────────────────────────────────────────

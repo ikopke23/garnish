@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { Clock, Users, Flame } from 'lucide-react';
+import { Clock, Users, Flame, ExternalLink } from 'lucide-react';
 import { getRecipe, deleteRecipe, Recipe } from '../api/recipes';
 import { groupIngredientsBySection } from '../utils/ingredients';
 import { getStory, getRandomStory, Story } from '../api/stories';
@@ -16,6 +16,7 @@ import { cn } from '@/lib/utils';
 import { useRecipeProgress } from '../hooks/useRecipeProgress';
 import { useRecipeMultiplier } from '../hooks/useRecipeMultiplier';
 import { formatQty } from '../utils/format';
+import { deriveSource } from '../utils/source';
 import CookMode from '../components/CookMode';
 
 export default function RecipeDetail() {
@@ -136,6 +137,7 @@ export default function RecipeDetail() {
 
   const isOwner = isAuthenticated && user?.uid === recipe.author_uid;
   const primaryPhoto = photos[0];
+  const src = deriveSource(recipe);
 
   const allIngredients = recipe.ingredients ?? [];
   const ingTotal = allIngredients.length;
@@ -186,7 +188,15 @@ export default function RecipeDetail() {
         {/* Title block */}
         <div className="absolute bottom-0 left-0 right-0" style={{ padding: '0 2rem 1.5rem' }}>
           <p style={{ fontFamily: '"Lora", Georgia, serif', fontSize: 10.5, textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: 8, opacity: 0.9, color: 'white' }}>
-            Family Recipe · @{recipe.author_username}
+            {src ? (
+              <>
+                {src.prefix} · {src.href
+                  ? <a href={src.href} target="_blank" rel="noopener" style={{ color: 'white', textDecoration: 'underline' }}>{src.label} <ExternalLink size={11} style={{ display: 'inline', verticalAlign: 'baseline' }} /></a>
+                  : <span>{src.label}</span>}
+              </>
+            ) : (
+              <>Family Recipe · @{recipe.author_username}</>
+            )}
           </p>
           <h1
             className="md:text-[42px] text-[26px] font-semibold leading-tight mb-3"

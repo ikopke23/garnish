@@ -45,6 +45,8 @@ export interface Recipe {
   proteins: number;
   fats: number;
   times_cooked?: number;
+  source?: string;
+  external_id?: string;
 }
 
 export interface RecipePayload {
@@ -60,6 +62,7 @@ export interface RecipePayload {
   carbs: number;
   proteins: number;
   fats: number;
+  source?: string;
 }
 
 export async function listRecipes(token: string | null, name?: string, ingredient?: string, family?: string): Promise<Recipe[]> {

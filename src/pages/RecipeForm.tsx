@@ -41,6 +41,7 @@ export default function RecipeForm({ editMode = false }: Props) {
   const location = useLocation();
 
   const [name, setName] = useState('');
+  const [source, setSource] = useState('');
   const [sections, setSections] = useState<RecipeSection[]>([{ title: '', steps: [''] }]);
   const [collapsedSections, setCollapsedSections] = useState<Set<number>>(new Set());
   const [prepTime, setPrepTime] = useState(0);
@@ -68,8 +69,10 @@ export default function RecipeForm({ editMode = false }: Props) {
   const [existingPhotos, setExistingPhotos] = useState<RecipePhoto[]>([]);
 
   useEffect(() => {
-    const imported = (location.state as { importedRecipe?: ParsedRecipe } | null)?.importedRecipe;
+    const state = location.state as { importedRecipe?: ParsedRecipe; importedSource?: string } | null;
+    const imported = state?.importedRecipe;
     if (!imported) return;
+    setSource(state?.importedSource ?? '');
     if (imported.name) setName(imported.name);
     if (imported.prep_time) setPrepTime(imported.prep_time);
     if (imported.cook_time) setCookTime(imported.cook_time);
@@ -92,6 +95,7 @@ export default function RecipeForm({ editMode = false }: Props) {
     if (editMode && rid) {
       getRecipe(rid).then(r => {
         setName(r.name);
+        setSource(r.source ?? '');
         setSections(r.sections?.length ? r.sections : [{ title: '', steps: [''] }]);
         setPrepTime(r.prep_time);
         setCookTime(r.cook_time);
@@ -198,6 +202,7 @@ export default function RecipeForm({ editMode = false }: Props) {
 
     const payload = {
       name,
+      source: source.trim() || undefined,
       sections: sections.map((s, si) => ({
         title: s.title.trim(),
         steps: s.steps.filter(st => st.trim()),
@@ -264,6 +269,14 @@ export default function RecipeForm({ editMode = false }: Props) {
         <div className="space-y-2 mb-4">
           <Label>Recipe Name *</Label>
           <Input value={name} onChange={e => setName(e.target.value)} required placeholder="e.g. Grandma's Apple Pie" />
+        </div>
+
+        <div className="space-y-2 mb-4">
+          <Label>Source (optional)</Label>
+          <Input value={source} onChange={e => setSource(e.target.value)} placeholder="e.g. Grandma's recipe box, or a link" />
+          <small style={{ color: 'var(--muted-hex)' }}>
+            Auto-filled when you import from a URL. Editable for anything you add by hand — a cookbook, a family member, a link. Leave it blank for an original recipe. A URL renders as a link on the recipe; plain text shows as-is.
+          </small>
         </div>
 
         <div className="grid md:grid-cols-3 grid-cols-1 gap-4">
