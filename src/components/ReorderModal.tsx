@@ -217,16 +217,27 @@ export default function ReorderModal(props: ReorderModalProps) {
       return;
     }
 
-    if (!isSectionHeader(activeId) && !isSectionHeader(overId)) {
-      const activeParts = activeId.split('-');
-      const overParts = overId.split('-');
-      if (activeParts[1] !== overParts[1]) return;
-      const gi = parseInt(activeParts[1]);
-      const oldIdx = parseInt(activeParts[2]);
-      const newIdx = parseInt(overParts[2]);
-      const next = groupDraft.map((g, i) =>
-        i === gi ? { ...g, ingredients: arrayMove(g.ingredients, oldIdx, newIdx) } : g
-      );
+    if (!isSectionHeader(activeId)) {
+      // Move the ingredient within the flat list (headers included), then
+      // regroup: each ingredient belongs to the nearest section header above
+      // it. This lets ingredients move freely between sections, including
+      // into empty ones by dropping onto the section header.
+      const oldIndex = ingFlatIds.indexOf(activeId);
+      // Index 0 is always the first section header; nothing may go above it.
+      const newIndex = Math.max(1, ingFlatIds.indexOf(overId));
+      if (oldIndex < 0 || oldIndex === newIndex) return;
+      const moved = arrayMove(ingFlatIds, oldIndex, newIndex);
+
+      const next: IngredientGroup[] = [];
+      for (const id of moved) {
+        const parts = id.split('-');
+        const gi = parseInt(parts[1]);
+        if (isSectionHeader(id)) {
+          next.push({ ...groupDraft[gi], ingredients: [] });
+        } else {
+          next[next.length - 1].ingredients.push(groupDraft[gi].ingredients[parseInt(parts[2])]);
+        }
+      }
       setGroupDraft(next);
       setIngFlatIds(buildIngredientFlatIds(next));
     }
