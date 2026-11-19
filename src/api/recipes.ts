@@ -45,6 +45,7 @@ export interface Recipe {
   proteins: number;
   fats: number;
   times_cooked?: number;
+  match_count?: number;
   source?: string;
   external_id?: string;
 }
@@ -65,10 +66,10 @@ export interface RecipePayload {
   source?: string;
 }
 
-export async function listRecipes(token: string | null, name?: string, ingredient?: string, family?: string): Promise<Recipe[]> {
+export async function listRecipes(token: string | null, name?: string, ingredients?: string[], family?: string): Promise<Recipe[]> {
   const params = new URLSearchParams();
   if (name) params.set('name', name);
-  if (ingredient) params.set('ingredient', ingredient);
+  ingredients?.forEach(i => params.append('ingredient', i));
   if (family) params.set('family', family);
   return apiFetch(`/recipes?${params}`, {}, token);
 }

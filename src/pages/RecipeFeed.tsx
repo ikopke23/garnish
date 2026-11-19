@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Clock, Users, Flame } from 'lucide-react';
+import { Clock, Users, Flame, X } from 'lucide-react';
 import { listRecipes, Recipe } from '../api/recipes';
 import { useAuth } from '../context/useAuth';
 import { Input } from '@/components/ui/input';
@@ -27,8 +27,10 @@ function IngredientSummary({ ingredients }: { ingredients: Recipe['ingredients']
   );
 }
 
-function RecipeCard({ recipe }: { recipe: Recipe }) {
+function RecipeCard({ recipe, searchedCount }: { recipe: Recipe; searchedCount: number }) {
   const totalTime = (recipe.prep_time || 0) + (recipe.cook_time || 0);
+  const showMatch = searchedCount > 0 && recipe.match_count != null;
+  const fullMatch = recipe.match_count === searchedCount;
   return (
     <Link to={`/recipes/${recipe.rid}`} style={{ textDecoration: 'none', color: 'inherit' }}>
       <div
@@ -57,6 +59,22 @@ function RecipeCard({ recipe }: { recipe: Recipe }) {
 
         {/* Content */}
         <div className="flex-1 p-4 flex flex-col gap-1">
+          {showMatch && (
+            <span
+              className="inline-flex items-center self-start px-2 py-0.5 text-[11px] uppercase tracking-[1px]"
+              style={{
+                fontFamily: '"Cinzel", Georgia, serif',
+                borderRadius: 20,
+                background: fullMatch
+                  ? 'color-mix(in oklab, var(--g-primary) 14%, var(--g-bg))'
+                  : 'var(--g-muted-bg)',
+                border: fullMatch ? '1px solid var(--g-primary)' : '1px solid var(--border-hex)',
+                color: fullMatch ? 'var(--g-primary)' : 'var(--muted-hex)',
+              }}
+            >
+              {recipe.match_count}/{searchedCount} ingredients
+            </span>
+          )}
           <p
             className="text-[10.5px] uppercase tracking-[1.5px] truncate"
             style={{ fontFamily: '"Lora", Georgia, serif', color: 'var(--muted-hex)' }}
@@ -105,20 +123,33 @@ export default function RecipeFeed() {
   const initialFamily = searchParams.get('family') ?? '';
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [nameFilter, setNameFilter] = useState('');
-  const [ingredientFilter, setIngredientFilter] = useState('');
+  const [ingredients, setIngredients] = useState<string[]>([]);
+  const [pendingIngredient, setPendingIngredient] = useState('');
   const [familyFilter, setFamilyFilter] = useState(initialFamily);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const lastFetchRef = useRef<number>(0);
 
-  const fetchRecipes = async (name?: string, ingredient?: string, family?: string) => {
+  const addIngredient = () => {
+    const trimmed = pendingIngredient.trim();
+    if (trimmed && !ingredients.some(i => i.toLowerCase() === trimmed.toLowerCase())) {
+      setIngredients([...ingredients, trimmed]);
+    }
+    setPendingIngredient('');
+  };
+
+  const removeIngredient = (idx: number) => {
+    setIngredients(ingredients.filter((_, i) => i !== idx));
+  };
+
+  const fetchRecipes = async (name?: string, ingredientList?: string[], family?: string) => {
     const now = Date.now();
     if (now - lastFetchRef.current < 1000) return;
     lastFetchRef.current = now;
     setLoading(true);
     setError(null);
     try {
-      const data = await listRecipes(token, name || undefined, ingredient || undefined, family || undefined);
+      const data = await listRecipes(token, name || undefined, ingredientList?.length ? ingredientList : undefined, family || undefined);
       setRecipes(data);
     } catch {
       setError('Failed to load recipes');
@@ -135,13 +166,24 @@ export default function RecipeFeed() {
       .finally(() => setLoading(false));
   }, [token, familyFilter]);
 
-  const hasQuery = nameFilter || ingredientFilter;
+  const hasQuery = nameFilter || ingredients.length > 0;
 
   const clearSearch = () => {
     setNameFilter('');
-    setIngredientFilter('');
+    setIngredients([]);
+    setPendingIngredient('');
     setFamilyFilter('');
     fetchRecipes(undefined, undefined, undefined);
+  };
+
+  const runSearch = () => {
+    const trimmed = pendingIngredient.trim();
+    const effective = trimmed && !ingredients.some(i => i.toLowerCase() === trimmed.toLowerCase())
+      ? [...ingredients, trimmed]
+      : ingredients;
+    if (effective !== ingredients) setIngredients(effective);
+    setPendingIngredient('');
+    fetchRecipes(nameFilter, effective, familyFilter);
   };
 
   return (
@@ -167,18 +209,50 @@ export default function RecipeFeed() {
               placeholder="Recipe name..."
               value={nameFilter}
               onChange={e => setNameFilter(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && fetchRecipes(nameFilter, ingredientFilter, familyFilter)}
+              onKeyDown={e => e.key === 'Enter' && fetchRecipes(nameFilter, ingredients, familyFilter)}
             />
-            <Input
-              placeholder="Filter by ingredient..."
-              value={ingredientFilter}
-              onChange={e => setIngredientFilter(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && fetchRecipes(nameFilter, ingredientFilter, familyFilter)}
-            />
+            <div className="flex-1 flex flex-col gap-2">
+              <Input
+                placeholder="Add ingredient..."
+                value={pendingIngredient}
+                onChange={e => setPendingIngredient(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter' || e.key === ',') {
+                    e.preventDefault();
+                    addIngredient();
+                  }
+                }}
+              />
+              {ingredients.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {ingredients.map((ing, idx) => (
+                    <span
+                      key={ing}
+                      className="inline-flex items-center gap-1 px-2 py-1 text-xs border border-border"
+                      style={{
+                        borderRadius: 20,
+                        background: 'color-mix(in oklab, var(--g-muted) 15%, var(--g-bg))',
+                        color: 'var(--g-text)',
+                      }}
+                    >
+                      {ing}
+                      <button
+                        type="button"
+                        onClick={() => removeIngredient(idx)}
+                        aria-label={`Remove ${ing}`}
+                        style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'inherit', display: 'inline-flex' }}
+                      >
+                        <X size={12} />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
             {hasQuery && (
               <Button variant="ghost" onClick={clearSearch}>Clear</Button>
             )}
-            <Button onClick={() => fetchRecipes(nameFilter, ingredientFilter, familyFilter)}>Search</Button>
+            <Button onClick={runSearch}>Search</Button>
           </div>
         </CardContent>
       </Card>
@@ -216,7 +290,7 @@ export default function RecipeFeed() {
             No recipes match - try a different search.
           </div>
         ) : (
-          recipes.map(recipe => <RecipeCard key={recipe.rid} recipe={recipe} />)
+          recipes.map(recipe => <RecipeCard key={recipe.rid} recipe={recipe} searchedCount={ingredients.length} />)
         )}
       </div>
     </div>
